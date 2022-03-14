@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+
+echoerr() { 
+    echo "$@" 1>&2; 
+}
+
+errexit() { 
+    echoerr "$@"; exit 1; 
+}
+
+tolower() {
+    echo $(echo "$1" | tr '[:upper:]' '[:lower:]')
+}
+
+# First argument is arg name, second argument is given value.
+# Match given value against -(first letter) or --(arg name)
+matcharg() (
+    local x=$(tolower $2)
+    local arg=$(tolower $1)
+    local letter=${arg::1}
+    if [[ "-$letter" == "$x" || "--$arg" == "$x" ]]; then
+        return 0
+    fi
+    return 1
+)
+
+matchverb() {
+    local x=$(tolower $2)
+    local arg=$(tolower $1)
+    local letter=${arg::1}
+    if [[ "$letter" == "$x" || "$arg" == "$x" ]]; then
+        return 0
+    fi
+    return 1
+}
+
+# check if first argument in rest. Capture short and long form name.
+# TODO: Figure out how to capture value for name when in pattern -n=x or --name=x
+containsarg() {
+    for x in ${@:2}; do
+        if matcharg $1 $x; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+help() {
+    echo "usage: xb [--help] [--verbose] <command>"
+    echo
+    echo "The xb commands are:"
+    echo "  generate:   Generate the build system"
+    echo "  build:      Build the project"
+    echo "  test:       Run the project tests"
+}
+
+generate() {
+    local SOURCE_DIR=$SCRIPT_DIR
+    local BUILD_DIR="$SCRIPT_DIR/out"
+
+    echo "[INFO] clearing build directory"
+    rm -rf ${BUILD_DIR}/*
+    echo "[INFO] generating build system"
+
+    local NINJA=$(which ninja)
+    if [[ -z $NINJA ]]; then
+        echo "[INFO] ninja not found. Using default generator."
+        cmake -S $SOURCE_DIR -B $BUILD_DIR $@
+    else
+        cmake -S $SOURCE_DIR -B $BUILD_DIR -GNinja $@
+    fi
+}
+
+build() {
+    local SOURCE_DIR=$SCRIPT_DIR
+    local BUILD_DIR="$SCRIPT_DIR/out"
+
+    echo "[INFO] building"
+    cmake --build $BUILD_DIR $@
+}
+
+test() {
+    local BUILD_DIR="$SCRIPT_DIR/out"
+
+    echo "[INFO] running ctest"
+    # This is where enable_testing is called in cmake.
+    ctest $@ --test-dir "$BUILD_DIR/tests"
+}
+
+if containsarg "verbose" "$@"; then
+    echo "[INFO] Enabling verbose"
+    set -euxo pipefail
+fi
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+if [[ "$#" -lt "1" ]]; then
+    errexit "Expected first argument to be command"
+fi
+
+# Match help keyword argument or a verb and forward arguments
+if matcharg "help" $1; then
+    help
+elif matchverb "generate" $1; then
+    generate "${@:2}"
+elif matchverb "build" $1; then
+    build "${@:2}"
+elif matchverb "test" $1; then
+    test "${@:2}"
+else
+    errexit "Unknown command $CMD"
+fi
