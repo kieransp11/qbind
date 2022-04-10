@@ -54,21 +54,21 @@ TEST_CASE("QBIND_ARGUMENTS")
     REQUIRE("()" == res);
     // One argument
     res = STR(QBIND_ARGUMENTS(fn, 1));
-    REQUIRE("(ConvertToCpp<qbind::ArgType<decltype(fn) , 0>{}.convert(karr0))" == res);
+    REQUIRE("(c.to_cpp<qbind::ArgType<decltype(fn) , 0>(karr0))" == res);
     // Two arguments
     res = STR(QBIND_ARGUMENTS(fn, 2));
-    REQUIRE("(ConvertToCpp<qbind::ArgType<decltype(fn) , 0>{}.convert(karr0) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(fn) , 1>{}.convert(karr1))" == res);
+    REQUIRE("(c.to_cpp<qbind::ArgType<decltype(fn) , 0>(karr0) ,"
+            " c.to_cpp<qbind::ArgType<decltype(fn) , 1>(karr1))" == res);
     // N arguments
     res = STR(QBIND_ARGUMENTS(fn, 8));
-    REQUIRE("(ConvertToCpp<qbind::ArgType<decltype(fn) , 0>{}.convert(karr0) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(fn) , 1>{}.convert(karr1) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(fn) , 2>{}.convert(karr2) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(fn) , 3>{}.convert(karr3) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(fn) , 4>{}.convert(karr4) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(fn) , 5>{}.convert(karr5) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(fn) , 6>{}.convert(karr6) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(fn) , 7>{}.convert(karr7))" == res);
+    REQUIRE("(c.to_cpp<qbind::ArgType<decltype(fn) , 0>(karr0) ,"
+            " c.to_cpp<qbind::ArgType<decltype(fn) , 1>(karr1) ,"
+            " c.to_cpp<qbind::ArgType<decltype(fn) , 2>(karr2) ,"
+            " c.to_cpp<qbind::ArgType<decltype(fn) , 3>(karr3) ,"
+            " c.to_cpp<qbind::ArgType<decltype(fn) , 4>(karr4) ,"
+            " c.to_cpp<qbind::ArgType<decltype(fn) , 5>(karr5) ,"
+            " c.to_cpp<qbind::ArgType<decltype(fn) , 6>(karr6) ,"
+            " c.to_cpp<qbind::ArgType<decltype(fn) , 7>(karr7))" == res);
 }
 
 TEST_CASE("QBIND_CALL_SIGNATURE")
@@ -78,55 +78,55 @@ TEST_CASE("QBIND_CALL_SIGNATURE")
     REQUIRE("(x ());" == res);
     // No arguments, K return, function named x.
     res = STR(QBIND_CALL_SIGNATURE(1, x, 0));
-    REQUIRE("return ConvertToQ<qbind::ResultType<decltype(x)>>{}.convert (x "
+    REQUIRE("return c.to_q<qbind::ResultType<decltype(x)>> (x "
             "()"
             ");" == res);
 
     // One argument, void return, function named x.
     res = STR(QBIND_CALL_SIGNATURE(0, x, 1));
-    REQUIRE("(x (ConvertToCpp<qbind::ArgType<decltype(x) , 0>{}.convert(karr0)));" == res);
+    REQUIRE("(x (c.to_cpp<qbind::ArgType<decltype(x) , 0>(karr0)));" == res);
     // One argument, K return, function named x.
     res = STR(QBIND_CALL_SIGNATURE(1, x, 1));
-    REQUIRE("return ConvertToQ<qbind::ResultType<decltype(x)>>{}.convert (x "
-            "(ConvertToCpp<qbind::ArgType<decltype(x) , 0>{}.convert(karr0))"
+    REQUIRE("return c.to_q<qbind::ResultType<decltype(x)>> (x "
+            "(c.to_cpp<qbind::ArgType<decltype(x) , 0>(karr0))"
             ");" == res);
 
     // Two arguments, void return, function named x.
     res = STR(QBIND_CALL_SIGNATURE(0, x, 2));
     REQUIRE("(x "
-            "(ConvertToCpp<qbind::ArgType<decltype(x) , 0>{}.convert(karr0) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(x) , 1>{}.convert(karr1))"
+            "(c.to_cpp<qbind::ArgType<decltype(x) , 0>(karr0) ,"
+            " c.to_cpp<qbind::ArgType<decltype(x) , 1>(karr1))"
             ");" == res);
     // Two arguments, K return, function named x.
     res = STR(QBIND_CALL_SIGNATURE(1, x, 2));
-    REQUIRE("return ConvertToQ<qbind::ResultType<decltype(x)>>{}.convert (x "
-            "(ConvertToCpp<qbind::ArgType<decltype(x) , 0>{}.convert(karr0) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(x) , 1>{}.convert(karr1))"
+    REQUIRE("return c.to_q<qbind::ResultType<decltype(x)>> (x "
+            "(c.to_cpp<qbind::ArgType<decltype(x) , 0>(karr0) ,"
+            " c.to_cpp<qbind::ArgType<decltype(x) , 1>(karr1))"
             ");" == res);
 
     // N arguments, void return, function named x.
     res = STR(QBIND_CALL_SIGNATURE(0, x, 8));
     REQUIRE("(x "
-            "(ConvertToCpp<qbind::ArgType<decltype(x) , 0>{}.convert(karr0) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(x) , 1>{}.convert(karr1) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(x) , 2>{}.convert(karr2) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(x) , 3>{}.convert(karr3) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(x) , 4>{}.convert(karr4) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(x) , 5>{}.convert(karr5) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(x) , 6>{}.convert(karr6) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(x) , 7>{}.convert(karr7))"
+            "(c.to_cpp<qbind::ArgType<decltype(x) , 0>(karr0) ,"
+            " c.to_cpp<qbind::ArgType<decltype(x) , 1>(karr1) ,"
+            " c.to_cpp<qbind::ArgType<decltype(x) , 2>(karr2) ,"
+            " c.to_cpp<qbind::ArgType<decltype(x) , 3>(karr3) ,"
+            " c.to_cpp<qbind::ArgType<decltype(x) , 4>(karr4) ,"
+            " c.to_cpp<qbind::ArgType<decltype(x) , 5>(karr5) ,"
+            " c.to_cpp<qbind::ArgType<decltype(x) , 6>(karr6) ,"
+            " c.to_cpp<qbind::ArgType<decltype(x) , 7>(karr7))"
             ");" == res);
     // N arguments, K return, function named x.
     res = STR(QBIND_CALL_SIGNATURE(1, x, 8));
-    REQUIRE("return ConvertToQ<qbind::ResultType<decltype(x)>>{}.convert (x "
-            "(ConvertToCpp<qbind::ArgType<decltype(x) , 0>{}.convert(karr0) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(x) , 1>{}.convert(karr1) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(x) , 2>{}.convert(karr2) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(x) , 3>{}.convert(karr3) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(x) , 4>{}.convert(karr4) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(x) , 5>{}.convert(karr5) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(x) , 6>{}.convert(karr6) ,"
-            " ConvertToCpp<qbind::ArgType<decltype(x) , 7>{}.convert(karr7))"
+    REQUIRE("return c.to_q<qbind::ResultType<decltype(x)>> (x "
+            "(c.to_cpp<qbind::ArgType<decltype(x) , 0>(karr0) ,"
+            " c.to_cpp<qbind::ArgType<decltype(x) , 1>(karr1) ,"
+            " c.to_cpp<qbind::ArgType<decltype(x) , 2>(karr2) ,"
+            " c.to_cpp<qbind::ArgType<decltype(x) , 3>(karr3) ,"
+            " c.to_cpp<qbind::ArgType<decltype(x) , 4>(karr4) ,"
+            " c.to_cpp<qbind::ArgType<decltype(x) , 5>(karr5) ,"
+            " c.to_cpp<qbind::ArgType<decltype(x) , 6>(karr6) ,"
+            " c.to_cpp<qbind::ArgType<decltype(x) , 7>(karr7))"
             ");" == res);
 }
 
@@ -144,6 +144,7 @@ TEST_CASE("QBIND_FN_EXPORT")
                     "K qna () "
                     "{ "
                         "qbind::helpers::NonConstLvalueRefArgChecker<decltype(na)>(); "
+                        "qbind::Converter c; "
                         "try { "
                             "(na ()); "
                         "} catch (const std::exception& e) { "
@@ -164,8 +165,9 @@ TEST_CASE("QBIND_FN_EXPORT")
                     "K qna () "
                     "{ "
                         "qbind::helpers::NonConstLvalueRefArgChecker<decltype(na)>(); "
+                        "qbind::Converter c; "
                         "try { "
-                            "return ConvertToQ<qbind::ResultType<decltype(na)>>{}.convert (na ()); "
+                            "return c.to_q<qbind::ResultType<decltype(na)>> (na ()); "
                         "} catch (const std::exception& e) { "
                             "thread_local std::string qna_errmsg; "
                             "qna_errmsg = e.what(); "
@@ -184,8 +186,9 @@ TEST_CASE("QBIND_FN_EXPORT")
                     "K qid (K karr0) "
                     "{ "
                         "qbind::helpers::NonConstLvalueRefArgChecker<decltype(id)>(); "
+                        "qbind::Converter c; "
                         "try { "
-                            "(id (ConvertToCpp<qbind::ArgType<decltype(id) , 0>{}.convert(karr0))); "
+                            "(id (c.to_cpp<qbind::ArgType<decltype(id) , 0>(karr0))); "
                         "} catch (const std::exception& e) { "
                             "thread_local std::string qid_errmsg; "
                             "qid_errmsg = e.what(); "
@@ -204,9 +207,10 @@ TEST_CASE("QBIND_FN_EXPORT")
                     "K qid (K karr0) "
                     "{ "
                         "qbind::helpers::NonConstLvalueRefArgChecker<decltype(id)>(); "
+                        "qbind::Converter c; "
                         "try { "
-                            "return ConvertToQ<qbind::ResultType<decltype(id)>>{}.convert (id "
-                            "(ConvertToCpp<qbind::ArgType<decltype(id) , 0>{}.convert(karr0))"
+                            "return c.to_q<qbind::ResultType<decltype(id)>> (id "
+                            "(c.to_cpp<qbind::ArgType<decltype(id) , 0>(karr0))"
                             "); "
                         "} catch (const std::exception& e) { "
                             "thread_local std::string qid_errmsg; "
@@ -226,10 +230,11 @@ TEST_CASE("QBIND_FN_EXPORT")
                     "K qadd (K karr0 , K karr1) "
                     "{ "
                         "qbind::helpers::NonConstLvalueRefArgChecker<decltype(add)>(); "
+                        "qbind::Converter c; "
                         "try { "
                             "(add "
-                            "(ConvertToCpp<qbind::ArgType<decltype(add) , 0>{}.convert(karr0) ,"
-                            " ConvertToCpp<qbind::ArgType<decltype(add) , 1>{}.convert(karr1))"
+                            "(c.to_cpp<qbind::ArgType<decltype(add) , 0>(karr0) ,"
+                            " c.to_cpp<qbind::ArgType<decltype(add) , 1>(karr1))"
                             "); "
                         "} catch (const std::exception& e) { "
                             "thread_local std::string qadd_errmsg; "
@@ -249,10 +254,11 @@ TEST_CASE("QBIND_FN_EXPORT")
                     "K qadd (K karr0 , K karr1) "
                     "{ "
                         "qbind::helpers::NonConstLvalueRefArgChecker<decltype(add)>(); "
+                        "qbind::Converter c; "
                         "try { "
-                            "return ConvertToQ<qbind::ResultType<decltype(add)>>{}.convert (add "
-                            "(ConvertToCpp<qbind::ArgType<decltype(add) , 0>{}.convert(karr0) ,"
-                            " ConvertToCpp<qbind::ArgType<decltype(add) , 1>{}.convert(karr1))"
+                            "return c.to_q<qbind::ResultType<decltype(add)>> (add "
+                            "(c.to_cpp<qbind::ArgType<decltype(add) , 0>(karr0) ,"
+                            " c.to_cpp<qbind::ArgType<decltype(add) , 1>(karr1))"
                             "); "
                         "} catch (const std::exception& e) { "
                             "thread_local std::string qadd_errmsg; "
@@ -272,16 +278,17 @@ TEST_CASE("QBIND_FN_EXPORT")
                     "K qbigfunc (K karr0 , K karr1 , K karr2 , K karr3 , K karr4 , K karr5 , K karr6 , K karr7) "
                     "{ "
                         "qbind::helpers::NonConstLvalueRefArgChecker<decltype(bigfunc)>(); "
+                        "qbind::Converter c; "
                         "try { "
                             "(bigfunc "
-                                "(ConvertToCpp<qbind::ArgType<decltype(bigfunc) , 0>{}.convert(karr0) ,"
-                                " ConvertToCpp<qbind::ArgType<decltype(bigfunc) , 1>{}.convert(karr1) ,"
-                                " ConvertToCpp<qbind::ArgType<decltype(bigfunc) , 2>{}.convert(karr2) ,"
-                                " ConvertToCpp<qbind::ArgType<decltype(bigfunc) , 3>{}.convert(karr3) ,"
-                                " ConvertToCpp<qbind::ArgType<decltype(bigfunc) , 4>{}.convert(karr4) ,"
-                                " ConvertToCpp<qbind::ArgType<decltype(bigfunc) , 5>{}.convert(karr5) ,"
-                                " ConvertToCpp<qbind::ArgType<decltype(bigfunc) , 6>{}.convert(karr6) ,"
-                                " ConvertToCpp<qbind::ArgType<decltype(bigfunc) , 7>{}.convert(karr7))"
+                                "(c.to_cpp<qbind::ArgType<decltype(bigfunc) , 0>(karr0) ,"
+                                " c.to_cpp<qbind::ArgType<decltype(bigfunc) , 1>(karr1) ,"
+                                " c.to_cpp<qbind::ArgType<decltype(bigfunc) , 2>(karr2) ,"
+                                " c.to_cpp<qbind::ArgType<decltype(bigfunc) , 3>(karr3) ,"
+                                " c.to_cpp<qbind::ArgType<decltype(bigfunc) , 4>(karr4) ,"
+                                " c.to_cpp<qbind::ArgType<decltype(bigfunc) , 5>(karr5) ,"
+                                " c.to_cpp<qbind::ArgType<decltype(bigfunc) , 6>(karr6) ,"
+                                " c.to_cpp<qbind::ArgType<decltype(bigfunc) , 7>(karr7))"
                             "); "
                         "} catch (const std::exception& e) { "
                             "thread_local std::string qbigfunc_errmsg; "
@@ -301,16 +308,17 @@ TEST_CASE("QBIND_FN_EXPORT")
                     "K qbigfunc (K karr0 , K karr1 , K karr2 , K karr3 , K karr4 , K karr5 , K karr6 , K karr7) "
                     "{ "
                         "qbind::helpers::NonConstLvalueRefArgChecker<decltype(bigfunc)>(); "
+                        "qbind::Converter c; "
                         "try { "
-                            "return ConvertToQ<qbind::ResultType<decltype(bigfunc)>>{}.convert (bigfunc "
-                                "(ConvertToCpp<qbind::ArgType<decltype(bigfunc) , 0>{}.convert(karr0) ,"
-                                " ConvertToCpp<qbind::ArgType<decltype(bigfunc) , 1>{}.convert(karr1) ,"
-                                " ConvertToCpp<qbind::ArgType<decltype(bigfunc) , 2>{}.convert(karr2) ,"
-                                " ConvertToCpp<qbind::ArgType<decltype(bigfunc) , 3>{}.convert(karr3) ,"
-                                " ConvertToCpp<qbind::ArgType<decltype(bigfunc) , 4>{}.convert(karr4) ,"
-                                " ConvertToCpp<qbind::ArgType<decltype(bigfunc) , 5>{}.convert(karr5) ,"
-                                " ConvertToCpp<qbind::ArgType<decltype(bigfunc) , 6>{}.convert(karr6) ,"
-                                " ConvertToCpp<qbind::ArgType<decltype(bigfunc) , 7>{}.convert(karr7))"
+                            "return c.to_q<qbind::ResultType<decltype(bigfunc)>> (bigfunc "
+                                "(c.to_cpp<qbind::ArgType<decltype(bigfunc) , 0>(karr0) ,"
+                                " c.to_cpp<qbind::ArgType<decltype(bigfunc) , 1>(karr1) ,"
+                                " c.to_cpp<qbind::ArgType<decltype(bigfunc) , 2>(karr2) ,"
+                                " c.to_cpp<qbind::ArgType<decltype(bigfunc) , 3>(karr3) ,"
+                                " c.to_cpp<qbind::ArgType<decltype(bigfunc) , 4>(karr4) ,"
+                                " c.to_cpp<qbind::ArgType<decltype(bigfunc) , 5>(karr5) ,"
+                                " c.to_cpp<qbind::ArgType<decltype(bigfunc) , 6>(karr6) ,"
+                                " c.to_cpp<qbind::ArgType<decltype(bigfunc) , 7>(karr7))"
                             "); "
                         "} catch (const std::exception& e) { "
                             "thread_local std::string qbigfunc_errmsg; "

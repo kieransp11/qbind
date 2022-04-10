@@ -4,7 +4,8 @@
 
 add_executable(qbind.cpp.tests
     main.cpp
-    test_macros.cpp)
+    test_macros.cpp
+    test_span.cpp)
 
 set_target_properties(qbind.cpp.tests
     PROPERTIES
@@ -14,6 +15,11 @@ set_target_properties(qbind.cpp.tests
 target_link_libraries(qbind.cpp.tests
     PRIVATE
         qbind)
+
+find_package(KDB REQUIRED COMPONENTS NOSSL)
+target_link_libraries(qbind.cpp.tests
+    PUBLIC
+        KDB::KDB)
 
 # Link catch 2
 include(FetchContent)

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <boost/preprocessor/repetition/repeat.hpp>
 #include <boost/preprocessor/control/if.hpp>
 #include <boost/preprocessor/arithmetic/sub.hpp>
@@ -130,7 +132,7 @@ void NonConstLvalueRefArgChecker()
  * @param n: Position in argument list (0 indexed)
  * @param fn: Which function this argument will be passed to
  */
-#define QBIND_ARGUMENT(fn, n) ConvertToCpp<qbind::ArgType<decltype(fn) QBIND_ID(QBIND_COMMA)() n>{}.convert(QBIND_JOIN(karr, n))
+#define QBIND_ARGUMENT(fn, n) c.to_cpp<qbind::ArgType<decltype(fn) QBIND_ID(QBIND_COMMA)() n>(QBIND_JOIN(karr, n))
 
 /**
  * @brief Fold function for BOOST_PP_REPEAT for an argument list
@@ -157,7 +159,7 @@ void NonConstLvalueRefArgChecker()
  * 
  * @param returns: 0 to discard the result, otherwise convert to a K object
  */
-#define QBIND_RETURN_CONVERSION(returns, fn) BOOST_PP_IF(returns, return ConvertToQ<qbind::ResultType<decltype(fn)>>{}.convert, QBIND_EMPTY)
+#define QBIND_RETURN_CONVERSION(returns, fn) BOOST_PP_IF(returns, return c.to_q<qbind::ResultType<decltype(fn)>>, QBIND_EMPTY)
 
 #define QBIND_CALL_SIGNATURE(returns, name, nargs) \
     QBIND_RETURN_CONVERSION(returns, name)         \
@@ -184,6 +186,7 @@ void NonConstLvalueRefArgChecker()
             QBIND_FN_SIGNATURE(name, nargs)                                  \
             {                                                                \
                 qbind::helpers::NonConstLvalueRefArgChecker<decltype(fn)>(); \
+                qbind::Converter c;                                          \
                 try                                                          \
                 {                                                            \
                     QBIND_CALL_SIGNATURE(returns, fn, nargs)                 \

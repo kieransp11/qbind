@@ -22,6 +22,20 @@ extern"C"{
 }
 #endif
 
+/**
+ * @brief create integer based atoms
+ * 
+ * @param t: Type, i.e. -KU for minute
+ * @param v: Value to set the atom to.
+ * @return K 
+ */
+extern inline K kti(I t, I v)
+{
+    auto atom = ka(t);
+    atom->i = v;
+    return atom;
+}
+
 // vector accessors, e.g. kF(x)[i] for float&datetime
 #undef kG(x)
 #undef kC(x)
