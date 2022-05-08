@@ -41,12 +41,12 @@ public:
                              return span_to_cpp<T>(qtype, arr); 
                          },
                          arr);
-        else if constexpr (is_instance<T, Map>::value)
-            return Visit([](auto qtype, auto arr)
-                        { 
-                            return map_to_cpp<T>(qtype, arr); 
-                        },
-                        arr);
+        // else if constexpr (is_instance<T, Map>::value)
+        //     return Visit([](auto qtype, auto arr)
+        //                 { 
+        //                     return map_to_cpp<T>(qtype, arr); 
+        //                 },
+        //                 arr);
         // else if constexpr (is_instance<T, Table>::value)
         //     return Visit([](auto qtype, auto arr)
         //                 { 
@@ -71,8 +71,8 @@ public:
     K to_q(T value)
     {
         // is_instance<T, Table>::value
-        if constexpr (is_instance<T, Map>::value)                  return value.to_q();
-        else if constexpr (is_instance<T, std::tuple>::value)           return tuple_to_q(value);
+        // if constexpr (is_instance<T, Map>::value)                  return value.to_q();
+        if constexpr (is_instance<T, std::tuple>::value)           return tuple_to_q(value);
         else if constexpr (is_instance<T, Span>::value)                     return value.span().to_q();
         // Atom - only accept default values.
         else if constexpr (std::is_same_v<T, UntypedSpan>)               return value.to_q();
@@ -112,9 +112,9 @@ private:
         UntypedSpan span(arr);
         if (span.size() != 1)
             throw std::invalid_argument("Cannot convert non-singleton vector to atom");
-        Type<QType, T> conversion_def;
+        Adapter<typename QType::Underlier, T> adapter;
         // converts singleton or atom
-        return conversion_def.getValue(*reinterpret_cast<
+        return adapter.getValue(*reinterpret_cast<
             typename QType::Underlier*>(span.data()));
     }
 
@@ -133,6 +133,7 @@ private:
     {
         if (arr->t != XD)
             throw std::invalid_argument("Array is not a map");
+        return T(arr);
     }
 
     template<class T>
@@ -160,6 +161,7 @@ private:
             throw std::invalid_argument("Tuple arity does not match array length");
 
         return tuple_to_cpp_impl(arr, T(), std::make_index_sequence<std::tuple_size<T>{}>{});
+        // TODO: should this decrement reference count of arr here as it is no longer used
     }
 
     template<class ...Args, size_t ... Idxs>

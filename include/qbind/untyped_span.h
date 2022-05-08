@@ -8,17 +8,8 @@
 namespace qbind
 {
 
-// forward
-namespace Q
-{
-
-template<size_t TypeCode, class UnderlierType>
-struct Type;
-
-}
-
-template <class QType, class TargetType, typename Enable = void>
-struct Type;
+template <class UnderlierType, class TargetType>
+struct Adapter;
 
 /**
  * @brief A type-erased container with correct move semantics for K
@@ -165,7 +156,8 @@ public:
         return UntypedSpan(m_arr, m_start + Offset, Count);
     }
 
-    ~UntypedSpan()
+    // TODO: Is marking this constexpr for Column literal type okay?
+    constexpr ~UntypedSpan()
     {
         if (m_arr) r0(m_arr);
     }
@@ -240,13 +232,13 @@ private:
     /**
      * @brief Friend as mixed arrays have elements of type untyped span.
      */
-    friend class Type < Q::Type<0, K>, UntypedSpan > ;
+    friend class Adapter<K, UntypedSpan> ;
 
     /**
      * @brief Friend to allow to do runtime check on construction that
      * conversion is correct.
      */
-    template <class T>
+    template <class QType, class Adapter>
     friend class Span;
 };
 }

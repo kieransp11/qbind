@@ -10,8 +10,13 @@ namespace qbind
 {
 
 // forward declare
-template <typename T>
+
+// Defaulting second argument causes segfault
+template <typename QType, typename Adapter>
 class Span;
+
+template <typename QType>
+using SimpleSpan = Span<QType, typename QType::Adapter>;
 
 template<typename RefType>
 class SpanIterator
@@ -75,21 +80,21 @@ private:
     difference_type m_index;
 };
 
-template <typename T>
+template <typename QType, typename Adapter>
 class Span
 {
 public:   
     //  constants and types
-    using element_type              = T;
-    using value_type                = std::remove_cv_t<typename T::Target>;
+    using element_type              = QType;
+    using value_type                = std::remove_cv_t<typename Adapter::Target>;
     using size_type                 = size_t;
     using difference_type           = ptrdiff_t;
-    using reference                 = Ref<T>;
-    using const_reference           = ConstRef<T>;
-    using iterator                  = SpanIterator<Ref<T>>;
-    using reverse_iterator          = SpanIterator<Ref<T>>;
-    using const_iterator            = SpanIterator<ConstRef<T>>;
-    using const_reverse_iterator    = SpanIterator<ConstRef<T>>;
+    using reference                 = Ref<Adapter>;
+    using const_reference           = ConstRef<Adapter>;
+    using iterator                  = SpanIterator<Ref<Adapter>>;
+    using reverse_iterator          = SpanIterator<Ref<Adapter>>;
+    using const_iterator            = SpanIterator<ConstRef<Adapter>>;
+    using const_reverse_iterator    = SpanIterator<ConstRef<Adapter>>;
 
     constexpr iterator       begin()    const noexcept { return SpanIterator<reference>(        data()); }
     constexpr const_iterator cbegin()   const noexcept { return SpanIterator<const_reference>(  data()); }
@@ -127,31 +132,31 @@ public:
     }
 
     template<size_t Count>
-    Span<T> first() const
+    Span<QType, Adapter> first() const
     {
         return {m_span.first<Count>()};
     }
-    Span<T> first(size_type Count) const
+    Span<QType, Adapter> first(size_type Count) const
     {
         return {m_span.first(Count)};
     }
 
     template<size_t Count>
-    Span<T> last() const
+    Span<QType, Adapter> last() const
     {
         return {m_span.last<Count>()};
     }
-    Span<T> last( size_type Count ) const
+    Span<QType, Adapter> last( size_type Count ) const
     {
         return {m_span.last(Count)};
     }
 
     template<size_t Offset, size_t Count>
-    Span<T> subspan() const
+    Span<QType, Adapter> subspan() const
     {
         return {m_span.subspan<Offset, Count>()};
     }
-    Span<T> subspan(size_type Offset, size_type Count) const
+    Span<QType, Adapter> subspan(size_type Offset, size_type Count) const
     {
         return {m_span.subspan(Offset, Count)};
     }
@@ -163,14 +168,14 @@ public:
     constexpr Span(const UntypedSpan& span)
         :m_span(std::move(span))
     {
-        if (std::abs(m_span.m_arr->t) != T::Code)
+        if (std::abs(m_span.m_arr->t) != QType::Code)
             throw std::invalid_argument("Span's underlying array does not match type specified");
     }
 
     constexpr Span(UntypedSpan&& span)
         :m_span(std::move(span))
     {
-        if (std::abs(m_span.m_arr->t) != T::Code)
+        if (std::abs(m_span.m_arr->t) != QType::Code)
             throw std::invalid_argument("Span's underlying array does not match type specified");
     }
 
@@ -180,7 +185,7 @@ public:
     }
 
 private:
-    using underlier =                   typename T::Underlier;
+    using underlier =                   typename QType::Underlier;
     using underlier_pointer =           underlier *;
     using underlier_const_pointer  =    const underlier *;
 

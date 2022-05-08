@@ -6,32 +6,32 @@
 namespace qbind
 {
 
-template<typename Type>
+template<typename Adapter>
 class Ref
 {
 public:
-    Ref(typename Type::Underlier& v)
+    Ref(typename Adapter::Underlier& v)
         :val_(v)
     {}
 
-    using Underlier = typename Type::Underlier;
-    using Target = typename Type::Target;
+    using Underlier = typename Adapter::Underlier;
+    using Target = typename Adapter::Target;
 
     /**
      * @brief other is target move assigned to this
      */
-    Ref<Type>& operator=(Target&& other)
+    Ref<Adapter>& operator=(Target&& other)
     {
-        type_.setValue(val_, std::move(other));
+        adapter_.setValue(val_, std::move(other));
         return *this;
     }
 
     /**
      * @brief other is target which is copy assigned to this
      */
-    Ref<Type>& operator=(const Target& other)
+    Ref<Adapter>& operator=(const Target& other)
     {
-        type_.setValue(val_, other);
+        adapter_.setValue(val_, other);
         return *this;
     }
 
@@ -41,13 +41,13 @@ public:
     /**
      * @brief convert this reference implicitly to the target type.
      */
-    operator Target() const { return type_.getValue(val_); }
+    operator Target() const { return adapter_.getValue(val_); }
 
     template<typename Element>
     friend std::ostream& operator<<(std::ostream& os, const Ref<Element>& ref);
 
 private:
-    Type type_;
+    Adapter adapter_;
     Underlier &val_;
 };
 
@@ -58,20 +58,18 @@ std::ostream& operator<<(std::ostream& os, const Ref<Element>& ref)
     return os;
 }
 
-template<typename Type>
+template<typename Adapter>
 class ConstRef
 {
 public:
-    using ElementType = Type;
-
-    ConstRef(typename Type::Underlier& v)
+    ConstRef(typename Adapter::Underlier& v)
         :val_(v)
     {}
 
-    using Underlier = typename Type::Underlier;
-    using Target = typename Type::Target;
+    using Underlier = typename Adapter::Underlier;
+    using Target = typename Adapter::Target;
 
-    constexpr ConstRef<Type>& operator=(Target other) const
+    constexpr ConstRef<Adapter>& operator=(Target other) const
     {
         constexpr auto false_ = [](){ return false; };
         static_assert(false_(), "Cannot assign to a const ref.");
@@ -79,13 +77,13 @@ public:
 
     // TODO: provide proper operators on the underlying
 
-    operator Target() const { return type_.getValue(val_); }
+    operator Target() const { return adapter_.getValue(val_); }
 
     template<typename Element>
     friend std::ostream& operator<<(std::ostream& os, const ConstRef<Element>& ref);
 
 private:
-    Type type_;
+    Adapter adapter_;
     Underlier &val_;
 };
 

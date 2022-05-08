@@ -23,26 +23,26 @@ auto Visit(Fn function, int8_t code, Args&&... args)
 {
     switch (std::abs(code))
     {
-        case 0:     return function(Q::Mixed(), std::forward<Args>(args)...);
-        case KB:    return function(Q::Boolean(), std::forward<Args>(args)...);
-        case UU:    return function(Q::Guid(), std::forward<Args>(args)...);
-        case KG:    return function(Q::Byte(), std::forward<Args>(args)...);
-        case KH:    return function(Q::Short(), std::forward<Args>(args)...);
-        case KI:    return function(Q::Integer(), std::forward<Args>(args)...);
-        case KJ:    return function(Q::Long(), std::forward<Args>(args)...);
-        case KE:    return function(Q::Real(), std::forward<Args>(args)...);
-        case KF:    return function(Q::Float(), std::forward<Args>(args)...);
-        case KC:    return function(Q::Char(), std::forward<Args>(args)...);
-        case KS:    return function(Q::Symbol(), std::forward<Args>(args)...);
-        case KP:    return function(Q::Timestamp(), std::forward<Args>(args)...);
-        case KM:    return function(Q::Month(), std::forward<Args>(args)...);
-        case KD:    return function(Q::Date(), std::forward<Args>(args)...);
-        case KN:    return function(Q::Timespan(), std::forward<Args>(args)...);
-        case KU:    return function(Q::Minute(), std::forward<Args>(args)...);
-        case KV:    return function(Q::Second(), std::forward<Args>(args)...);
-        case KT:    return function(Q::Time(), std::forward<Args>(args)...);
-        case KZ:    return function(Q::Datetime(), std::forward<Args>(args)...);
-        case 128:   return function(Q::Error(), std::forward<Args>(args)...);
+        case 0:     return function(Mixed(), std::forward<Args>(args)...);
+        case KB:    return function(Boolean(), std::forward<Args>(args)...);
+        case UU:    return function(Guid(), std::forward<Args>(args)...);
+        case KG:    return function(Byte(), std::forward<Args>(args)...);
+        case KH:    return function(Short(), std::forward<Args>(args)...);
+        case KI:    return function(Integer(), std::forward<Args>(args)...);
+        case KJ:    return function(Long(), std::forward<Args>(args)...);
+        case KE:    return function(Real(), std::forward<Args>(args)...);
+        case KF:    return function(Float(), std::forward<Args>(args)...);
+        case KC:    return function(Char(), std::forward<Args>(args)...);
+        case KS:    return function(Symbol(), std::forward<Args>(args)...);
+        case KP:    return function(Timestamp(), std::forward<Args>(args)...);
+        case KM:    return function(Month(), std::forward<Args>(args)...);
+        case KD:    return function(Date(), std::forward<Args>(args)...);
+        case KN:    return function(Timespan(), std::forward<Args>(args)...);
+        case KU:    return function(Minute(), std::forward<Args>(args)...);
+        case KV:    return function(Second(), std::forward<Args>(args)...);
+        case KT:    return function(Time(), std::forward<Args>(args)...);
+        case KZ:    return function(Datetime(), std::forward<Args>(args)...);
+        case 128:   return function(Error(), std::forward<Args>(args)...);
     }
     std::ostringstream s;
     s << "Attempted to visit on unknown KDB type code " << std::to_string(code) << ".";

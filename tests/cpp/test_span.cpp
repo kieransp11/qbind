@@ -22,7 +22,7 @@ TEST_CASE("SPAN_ATOM_SINGLETON_SEMANTICS")
 
     SECTION("ATOM_AS_SINGLETON")
     {
-        auto span = c.to_cpp<qbind::Span<qbind::Integer>>(ki(99));
+        auto span = c.to_cpp<qbind::SimpleSpan<qbind::Integer>>(ki(99));
         REQUIRE(span.size() == 1);
         REQUIRE(*span.front() == 99);
         REQUIRE(*span.back() == 99);
@@ -45,7 +45,7 @@ TEST_CASE("SPAN_ATOM_SINGLETON_SEMANTICS")
     {
         auto arr = ktn(KI, 1);
         ((I *)(arr->G0))[0] = 777;
-        auto span = c.to_cpp<qbind::Span<qbind::Integer>>(arr);
+        auto span = c.to_cpp<qbind::SimpleSpan<qbind::Integer>>(arr);
         REQUIRE(span.size() == 1);
         REQUIRE(*span.front() == 777);
         REQUIRE(*span.back() == 777);
@@ -68,7 +68,7 @@ TEST_CASE("ELEMENT_ACCESSORS")
     }
 
     qbind::Converter c;
-    auto span = c.to_cpp<qbind::Span<qbind::Integer>>(arr);
+    auto span = c.to_cpp<qbind::SimpleSpan<qbind::Integer>>(arr);
 
     REQUIRE(*span.front() == 111);
     REQUIRE(*span.begin() == 111);
@@ -123,7 +123,7 @@ TEST_CASE("BASIC_TUPLE")
     {
         auto mixedk = knk(2, ki(99), kj(88));
         auto [intspan, longspan] = c.to_cpp<
-            std::tuple<qbind::Span<qbind::Integer>, qbind::Span<qbind::Long>>>(mixedk);
+            std::tuple<qbind::SimpleSpan<qbind::Integer>, qbind::SimpleSpan<qbind::Long>>>(mixedk);
 
         REQUIRE(*intspan.front() == 99);
         REQUIRE(*longspan.front() == 88);
@@ -149,7 +149,7 @@ TEST_CASE("BASIC_TUPLE")
         ((J *)(jarr->G0))[0] = 888;
         auto mixedk = knk(2, iarr, jarr);
         auto [intspan, longspan] = c.to_cpp<
-            std::tuple<qbind::Span<qbind::Integer>, qbind::Span<qbind::Long>>>(mixedk);
+            std::tuple<qbind::SimpleSpan<qbind::Integer>, qbind::SimpleSpan<qbind::Long>>>(mixedk);
         REQUIRE(*intspan.front() == 777);
         REQUIRE(*longspan.front() == 888);
     }

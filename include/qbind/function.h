@@ -1,5 +1,3 @@
-#pragma once
-
 #include <boost/preprocessor/repetition/repeat.hpp>
 #include <boost/preprocessor/control/if.hpp>
 #include <boost/preprocessor/arithmetic/sub.hpp>
@@ -132,7 +130,7 @@ void NonConstLvalueRefArgChecker()
  * @param n: Position in argument list (0 indexed)
  * @param fn: Which function this argument will be passed to
  */
-#define QBIND_ARGUMENT(fn, n) c.to_cpp<qbind::ArgType<decltype(fn) QBIND_ID(QBIND_COMMA)() n>(QBIND_JOIN(karr, n))
+#define QBIND_ARGUMENT(fn, n) c.to_cpp<qbind::ArgType<decltype(fn) QBIND_ID(QBIND_COMMA)() n>>(QBIND_JOIN(karr, n))
 
 /**
  * @brief Fold function for BOOST_PP_REPEAT for an argument list
@@ -165,6 +163,9 @@ void NonConstLvalueRefArgChecker()
     QBIND_RETURN_CONVERSION(returns, name)         \
     (name QBIND_ARGUMENTS(name, nargs));
 
+// TODO: Make sure we get a good error message that we can't support non-const lvalue references.
+// Suggest a non-owning view by value instead.
+// TODO: krr and orr are not working properly
 /**
  * @brief Export a function to Q.
  * 
@@ -179,25 +180,24 @@ void NonConstLvalueRefArgChecker()
  * @param nargs: Number of arguments of function
  * @param returns: 0 if doesn't return
  */
-#define QBIND_FN_EXPORT(fn, name, nargs, returns)                            \
-    {                                                                        \
-        extern "C"                                                           \
-        {                                                                    \
-            QBIND_FN_SIGNATURE(name, nargs)                                  \
-            {                                                                \
-                qbind::helpers::NonConstLvalueRefArgChecker<decltype(fn)>(); \
-                qbind::Converter c;                                          \
-                try                                                          \
-                {                                                            \
-                    QBIND_CALL_SIGNATURE(returns, fn, nargs)                 \
-                }                                                            \
-                catch (const std::exception& e)                              \
-                {                                                            \
-                    thread_local std::string name ## _errmsg;                \
-                    name ## _errmsg = e.what();                              \
-                    return krr(name ## _errmsg.c_str());                     \
-                }                                                            \
-                return knk(0);                                               \
-            }                                                                \
-        }                                                                    \
-    }
+#define QBIND_FN_EXPORT(fn, name, nargs, returns)                        \
+    extern "C"                                                           \
+    {                                                                    \
+        QBIND_FN_SIGNATURE(name, nargs)                                  \
+        {                                                                \
+            qbind::helpers::NonConstLvalueRefArgChecker<decltype(fn)>(); \
+            qbind::Converter c;                                          \
+            try                                                          \
+            {                                                            \
+                QBIND_CALL_SIGNATURE(returns, fn, nargs)                 \
+            }                                                            \
+            catch (const std::exception& e)                              \
+            {                                                            \
+                thread_local std::string errmsg;                         \
+                errmsg = e.what();                                       \
+                std::cerr << errmsg << std::endl;                        \
+                return krr(errmsg.data());                               \
+            }                                                            \
+            return knk(0);                                               \
+        }                                                                \
+    }                                                                    
