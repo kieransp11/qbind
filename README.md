@@ -40,8 +40,8 @@ Mixed arrays are `K` objects filled with other `K` objects. In many cases the le
 
 ## TODO:
 
-- Try writing converters for constructible types
-- Investigate boost::hana as a way to rapidly bind templated functions.
-- Test conversion functions on their own without spans involved.
+- Fix function functionality for new method
+- Implement map interface.
 - Implement table interface.
-- Investigate what r0 does when called on a parent object (i.e. are a tables columns and headers deallocated, are a maps keys and values deallocated when called on the map/table K object first). Are we safe if only converter passes ownership and everyone else uses a symmetric model, so the last reference is really the last to deallocate.
+- Implement keyed table interface.
+- Reimplement singletons as atoms and atoms as singletons.

@@ -4,6 +4,7 @@
 
 add_executable(qbind.cpp.tests
     main.cpp
+    test_kx.cpp
     test_macros.cpp
     test_span.cpp)
 

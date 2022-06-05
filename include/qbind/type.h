@@ -1,56 +1,157 @@
 #pragma once
 
-#include <chrono>
-
-#include <kx/kx.h>
-
-#include "untyped_span.h"
-#include "adapter.h"
-
 namespace qbind 
 {
 
 /**
- * @brief K type used to map type codes to underlying types.
+ * @brief The possible atomic types for values in KDB
  * 
- * @tparam TypeCode : K type code
- * @tparam UnderlierType : Underlying type, as specified by k0 struct.
- * @tparam DefaultAdapter : Default convert from underlying to useful type and back.
+ * signed char like the t field of the k0 struct.
  */
-template<size_t TypeCode, class UnderlierType, class DefaultTarget = UnderlierType>
-struct Type
+enum class Type2 : signed char
 {
-    static constexpr size_t Code = TypeCode;
-    static constexpr size_t Size = sizeof(UnderlierType);
-    using Underlier = UnderlierType;
-    using Adapter = Adapter<UnderlierType, DefaultTarget>;
+    Boolean = KB,
+    GUID = UU,
+    Byte = KG,
+    Short = KH,
+    Int = KI,
+    Long = KJ,
+    Real = KE,
+    Float = KF,
+    Char = KC,
+    Symbol = KS,
+    Timestamp = KP,
+    Month = KM,
+    Date = KD,
+    Datetime = KZ, // deprecated
+    Timespan = KN,
+    Minute = KU,
+    Second = KV,
+    Time = KT,
 };
 
-using Mixed =       Type<0, K, Adapter<K, UntypedSpan>>;
-using Boolean =     Type<KB, bool>;
-using Guid =        Type<UU, U, std::array<uint8_t, 16>>;
-using Byte =        Type<KG, uint8_t>;
-using Short =       Type<KH, int16_t>;
-using Integer =     Type<KI, int32_t>;
-using Long =        Type<KJ, int64_t>;
-using Real =        Type<KE, float>;
-using Float =       Type<KF, double>;
-using Char =        Type<KC, char>;
-using Symbol =      Type<KS, char *, std::string_view>;
+/**
+ * @brief Property based checked for type of K array
+ */
+class TypeClass
+{
+public:
+    constexpr TypeClass(signed char t) noexcept
+    :m_t(t)
+    { }
 
-using Timestamp =   Type<KP, int64_t, chrono::Timestamp>;
-using Month =       Type<KM, int32_t, chrono::Month>;
-using Date =        Type<KD, int32_t, chrono::Date>;
+    Type2 type() const
+    {
+        if (isAtom() || isVector())
+        {
+            return Type2(abs(m_t));
+        }
+        std::ostringstream ss;
+        ss << "No type available. " << static_cast<int>(m_t) << " is not an atom or vector.";
+        throw std::runtime_error(ss.str());
+    }
 
-using Timespan =    Type<KN, int64_t, chrono::Timespan>;
-using Minute =      Type<KU, int32_t, chrono::Minute>;
-using Second =      Type<KV, int32_t, chrono::Second>;
-using Time =        Type<KT, int32_t, chrono::Time>;
+    constexpr bool isError() const noexcept
+    {
+        return m_t == -128;
+    }
 
-// TODO: Find a better default
-using Datetime =    Type<KZ, double>;
+    constexpr bool isAtom() const noexcept
+    {
+        return -19 <= m_t && m_t <= -1 && m_t != -3;
+    }
 
-using Error =       Type<128, char *, std::runtime_error>;
+    constexpr bool isTuple() const noexcept
+    {
+        return m_t == 0;
+    }
 
+    constexpr bool isVector() const noexcept
+    {
+        return 1 <= m_t && m_t <= 19 && m_t != 3;
+    }
+
+    constexpr bool isTable() const noexcept
+    {
+        return m_t == 98;
+    }
+
+    constexpr bool isDictionary() const noexcept
+    {
+        return m_t == 99;
+    }
+
+    constexpr bool isUnknown() const noexcept
+    {
+        return !(isError() || isAtom() || isTuple() || isVector() || isTable() || isDictionary());
+    }
+
+    friend auto operator<<(std::ostream& os, TypeClass const& tc) -> std::ostream& {
+        if (tc.isError())
+            return os << "ERROR";
+        if (tc.isAtom())
+            return os << type_txt[abs(tc.m_t) - 1] << " Atom";
+        if (tc.isTuple())
+            return os << "Tuple";
+        if (tc.isVector())
+            return os << type_txt[tc.m_t - 1] << " Vector";
+        if (tc.isTable())
+            return os << "Table";
+        if (tc.isDictionary())
+            return os << "Dictionary";
+        return os << "Unknown";
+    }
+
+    constexpr bool operator==(const TypeClass& rhs) const
+    {
+        return m_t == rhs.m_t;
+    }
+    constexpr bool operator!=(const TypeClass& rhs) const
+    {
+        return m_t != rhs.m_t;
+    }
+
+private:
+    signed char m_t;
+
+    static const char *type_txt[];
+};
+
+const char *TypeClass::type_txt[] = {
+        "Boolean", "GUID", "", "Byte",            // 1 - 4
+        "Short", "Int", "Long",                   // 5 - 7
+        "Real", "Float",                          // 8 - 9
+        "Char", "Symbol",                         // 10 - 11
+        "Timestamp", "Month", "Date", "Datetime", // 12 - 15
+        "Timespan", "Minute", "Second", "Time"};  // 16 - 19
+
+namespace internal
+{
+
+/**
+ * @brief Map Type to underlying type.
+ */
+template<Type2 T> struct c_type;
+
+template<> struct c_type<Type2::Boolean> { using Underlier = bool; };
+template<> struct c_type<Type2::GUID>    { using Underlier = std::array<uint8_t, 16>; };
+template<> struct c_type<Type2::Byte>    { using Underlier = uint8_t; };
+template<> struct c_type<Type2::Short>   { using Underlier = int16_t; };
+template<> struct c_type<Type2::Int>     { using Underlier = int32_t; };
+template<> struct c_type<Type2::Long>    { using Underlier = int64_t; };
+template<> struct c_type<Type2::Real>    { using Underlier = float; };
+template<> struct c_type<Type2::Float>   { using Underlier = double; };
+template<> struct c_type<Type2::Char>    { using Underlier = char; };
+template<> struct c_type<Type2::Symbol>  { using Underlier = char *; };
+template<> struct c_type<Type2::Timestamp> { using Underlier = int64_t; };
+template<> struct c_type<Type2::Month>   { using Underlier = int32_t; };
+template<> struct c_type<Type2::Date>    { using Underlier = int32_t; };
+template<> struct c_type<Type2::Datetime> { using Underlier = double;};
+template<> struct c_type<Type2::Timespan> { using Underlier = int64_t; };
+template<> struct c_type<Type2::Minute>  { using Underlier = int32_t; };
+template<> struct c_type<Type2::Second>  { using Underlier = int32_t; };
+template<> struct c_type<Type2::Time>    { using Underlier = int32_t; };
+
+}
 
 }
