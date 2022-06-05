@@ -190,7 +190,7 @@ extern I khpunc(S,I,S,I,I),
          */
          khpun(const S,I,const S,I),
         /**
-         * @brief Construct without a timeout.
+         * @brief Connect without a timeout.
          * 
          * Same as connect with timeout where timeout=0.
          */
