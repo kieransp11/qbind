@@ -1,16 +1,23 @@
+#pragma once
+
+#include <exception>
+#include <iostream>
+#include <string>
+#include <type_traits>
+#include <utility>
+
 #include <boost/preprocessor/repetition/repeat.hpp>
 #include <boost/preprocessor/control/if.hpp>
 #include <boost/preprocessor/arithmetic/sub.hpp>
 
-#include <boost/function_types/function_arity.hpp> // boost::function_types::function_arity;
-#include <boost/function_types/result_type.hpp>    // boost::function_types::result_type;
+#include <boost/function_types/function_arity.hpp>  // boost::function_types::function_arity;
+#include <boost/function_types/result_type.hpp>     // boost::function_types::result_type;
 #include <boost/function_types/parameter_types.hpp> // boost::function_types::parameter_types;
 #include <boost/mpl/at.hpp>                         // boost::mpl::at_c;
 
-#include <type_traits>
-#include <utility>
-
 #include <kx/kx.h>                                  // used in QBIND_FN_EXPORT
+
+#include "converter.h"
 
 namespace qbind {
 
@@ -130,7 +137,7 @@ void NonConstLvalueRefArgChecker()
  * @param n: Position in argument list (0 indexed)
  * @param fn: Which function this argument will be passed to
  */
-#define QBIND_ARGUMENT(fn, n) c.to_cpp<qbind::ArgType<decltype(fn) QBIND_ID(QBIND_COMMA)() n>>(QBIND_JOIN(karr, n))
+#define QBIND_ARGUMENT(fn, n) qbind::Converter::to_cpp<qbind::ArgType<decltype(fn) QBIND_ID(QBIND_COMMA)() n>>(QBIND_JOIN(karr, n))
 
 /**
  * @brief Fold function for BOOST_PP_REPEAT for an argument list
@@ -157,7 +164,7 @@ void NonConstLvalueRefArgChecker()
  * 
  * @param returns: 0 to discard the result, otherwise convert to a K object
  */
-#define QBIND_RETURN_CONVERSION(returns, fn) BOOST_PP_IF(returns, return c.to_q<qbind::ResultType<decltype(fn)>>, QBIND_EMPTY)
+#define QBIND_RETURN_CONVERSION(returns, fn) BOOST_PP_IF(returns, return qbind::Converter::to_q<qbind::ResultType<decltype(fn)>>, QBIND_EMPTY)
 
 #define QBIND_CALL_SIGNATURE(returns, name, nargs) \
     QBIND_RETURN_CONVERSION(returns, name)         \
@@ -186,7 +193,6 @@ void NonConstLvalueRefArgChecker()
         QBIND_FN_SIGNATURE(name, nargs)                                  \
         {                                                                \
             qbind::helpers::NonConstLvalueRefArgChecker<decltype(fn)>(); \
-            qbind::Converter c;                                          \
             try                                                          \
             {                                                            \
                 QBIND_CALL_SIGNATURE(returns, fn, nargs)                 \

@@ -41,7 +41,7 @@ void task1()
  */
 void check_element_access()
 {
-    qbind::Vector<qbind::Type2::Short> vec{1, 2, 3, 4, 5};
+    qbind::Vector<qbind::Type::Short> vec{1, 2, 3, 4, 5};
 
     std::cout << std::to_string(vec.front()) << " " << std::to_string(vec.back()) << std::endl;
     for (auto i = 0; i < vec.size(); ++i)
@@ -51,7 +51,7 @@ void check_element_access()
         std::cout << " -> " << std::to_string(vec[i]) << std::endl;
     }
 
-    qbind::Vector<qbind::Type2::Symbol> vec2{"hello", "bonjour", "hallo"};
+    qbind::Vector<qbind::Type::Symbol> vec2{"hello", "bonjour", "hallo"};
 
     std::cout << vec2.front() << " " << vec2.back() << std::endl;
     for (auto i = 0; i < vec2.size(); ++i)
@@ -64,31 +64,30 @@ void check_element_access()
 }
 
 qbind::Tuple<
-    qbind::Atom<qbind::Type2::Boolean>,
-    qbind::Atom<qbind::Type2::Long>
+    qbind::Atom<qbind::Type::Boolean>,
+    qbind::Atom<qbind::Type::Long>
 > check_tuple_type_checking()
 {
     ::K inner = knk(1, kb(1));
 
     ::K mixed = knk(3, kb(1), ktn(KJ, 5), inner);
 
-    auto b = qbind::Atom<qbind::Type2::Boolean>{true};
-    auto l = qbind::Atom<qbind::Type2::Long>{999};
-    auto mixed2 = knk(2, b.get().get(), l.get().get());
+    auto b = qbind::Atom<qbind::Type::Boolean>{true};
+    auto l = qbind::Atom<qbind::Type::Long>{999};
 
-    return qbind::Tuple<qbind::Atom<qbind::Type2::Boolean>,
-                 qbind::Atom<qbind::Type2::Long>>{
+    return qbind::Tuple<qbind::Atom<qbind::Type::Boolean>,
+                 qbind::Atom<qbind::Type::Long>>{
         std::move(b), std::move(l)};
 
     // qbind::Tuple<
-    //     qbind::Atom<qbind::Type2::Boolean>,
-    //     qbind::Vector<qbind::Type2::Long>,
+    //     qbind::Atom<qbind::Type::Boolean>,
+    //     qbind::Vector<qbind::Type::Long>,
     //     qbind::Tuple<
-    //         qbind::Atom<qbind::Type2::Long>
+    //         qbind::Atom<qbind::Type::Long>
     //     >
     // >::check_type_match<0,0>(mixed);
 
-    //qbind::Tuple<qbind::Atom<qbind::Type2::Boolean>, qbind::Vector<qbind::Type2::Long>>::check_type_match<0,0>(ki(5));
+    //qbind::Tuple<qbind::Atom<qbind::Type::Boolean>, qbind::Vector<qbind::Type::Long>>::check_type_match<0,0>(ki(5));
 }
 
 int main()
@@ -115,7 +114,7 @@ int main()
 
     qbind::K qsymbol(symbol);
 
-    qbind::Atom<qbind::Type2::Symbol> qatom("qsymbol");
+    qbind::Atom<qbind::Type::Symbol> qatom("qsymbol");
 
     std::cout << "here" <<  (qatom.TypeInfo == qbind::TypeClass(-11)) << std::endl;
 
@@ -131,13 +130,13 @@ int main()
 
     auto short_ = kh(125);
     qbind::K qshort(short_);
-    qbind::Atom<qbind::Type2::Short> qsatom(15);
+    qbind::Atom<qbind::Type::Short> qsatom(15);
     
     short h = qsatom;
     std::cout << qsatom << std::endl;
 
 
-    auto badType = qbind::Type2(99);
+    auto badType = qbind::Type(99);
     std::cout << (int32_t)badType << std::endl;
     auto descAtom = ka(12);
     std::cout << descAtom << std::endl;

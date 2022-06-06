@@ -1,5 +1,10 @@
 #pragma once
 
+#include <sstream>
+#include <stdexcept>
+
+#include <kx/kx.h>
+
 namespace qbind 
 {
 
@@ -8,7 +13,7 @@ namespace qbind
  * 
  * signed char like the t field of the k0 struct.
  */
-enum class Type2 : signed char
+enum class Type : signed char
 {
     Boolean = KB,
     GUID = UU,
@@ -40,11 +45,11 @@ public:
     :m_t(t)
     { }
 
-    Type2 type() const
+    Type type() const
     {
         if (isAtom() || isVector())
         {
-            return Type2(abs(m_t));
+            return Type(abs(m_t));
         }
         std::ostringstream ss;
         ss << "No type available. " << static_cast<int>(m_t) << " is not an atom or vector.";
@@ -131,26 +136,26 @@ namespace internal
 /**
  * @brief Map Type to underlying type.
  */
-template<Type2 T> struct c_type;
+template<Type T> struct c_type;
 
-template<> struct c_type<Type2::Boolean> { using Underlier = bool; };
-template<> struct c_type<Type2::GUID>    { using Underlier = std::array<uint8_t, 16>; };
-template<> struct c_type<Type2::Byte>    { using Underlier = uint8_t; };
-template<> struct c_type<Type2::Short>   { using Underlier = int16_t; };
-template<> struct c_type<Type2::Int>     { using Underlier = int32_t; };
-template<> struct c_type<Type2::Long>    { using Underlier = int64_t; };
-template<> struct c_type<Type2::Real>    { using Underlier = float; };
-template<> struct c_type<Type2::Float>   { using Underlier = double; };
-template<> struct c_type<Type2::Char>    { using Underlier = char; };
-template<> struct c_type<Type2::Symbol>  { using Underlier = char *; };
-template<> struct c_type<Type2::Timestamp> { using Underlier = int64_t; };
-template<> struct c_type<Type2::Month>   { using Underlier = int32_t; };
-template<> struct c_type<Type2::Date>    { using Underlier = int32_t; };
-template<> struct c_type<Type2::Datetime> { using Underlier = double;};
-template<> struct c_type<Type2::Timespan> { using Underlier = int64_t; };
-template<> struct c_type<Type2::Minute>  { using Underlier = int32_t; };
-template<> struct c_type<Type2::Second>  { using Underlier = int32_t; };
-template<> struct c_type<Type2::Time>    { using Underlier = int32_t; };
+template<> struct c_type<Type::Boolean> { using Underlier = bool; };
+template<> struct c_type<Type::GUID>    { using Underlier = std::array<uint8_t, 16>; };
+template<> struct c_type<Type::Byte>    { using Underlier = uint8_t; };
+template<> struct c_type<Type::Short>   { using Underlier = int16_t; };
+template<> struct c_type<Type::Int>     { using Underlier = int32_t; };
+template<> struct c_type<Type::Long>    { using Underlier = int64_t; };
+template<> struct c_type<Type::Real>    { using Underlier = float; };
+template<> struct c_type<Type::Float>   { using Underlier = double; };
+template<> struct c_type<Type::Char>    { using Underlier = char; };
+template<> struct c_type<Type::Symbol>  { using Underlier = char *; };
+template<> struct c_type<Type::Timestamp> { using Underlier = int64_t; };
+template<> struct c_type<Type::Month>   { using Underlier = int32_t; };
+template<> struct c_type<Type::Date>    { using Underlier = int32_t; };
+template<> struct c_type<Type::Datetime> { using Underlier = double;};
+template<> struct c_type<Type::Timespan> { using Underlier = int64_t; };
+template<> struct c_type<Type::Minute>  { using Underlier = int32_t; };
+template<> struct c_type<Type::Second>  { using Underlier = int32_t; };
+template<> struct c_type<Type::Time>    { using Underlier = int32_t; };
 
 }
 

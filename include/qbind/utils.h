@@ -1,70 +1,58 @@
 #pragma once
 
+#include <type_traits>
+
 #include "type.h"
 
-namespace qbind
+namespace qbind::internal
 {
+    
+template <class, template <class...> class>
+struct is_instance_class : public std::false_type {};
+
+template <class...Ts, template <class...> class U>
+struct is_instance_class<U<Ts...>, U> : public std::true_type {};
+
+template<class, template <Type...> class>
+struct is_instance_type : public std::false_type {};
+
+template <Type...Ts, template <Type...> class U>
+struct is_instance_type<U<Ts...>, U> : public std::true_type {};
+
+// Symbol helpers
+
+#define ENABLE_IF_SYMBOL template <                             \
+        bool Cond = T==Type::Symbol,                           \
+        typename = typename std::enable_if<Cond, void>::type    \
+    >
+
+#define DISABLE_IF_SYMBOL template <                            \
+        bool Cond = T!=Type::Symbol,                           \
+        typename = typename std::enable_if<Cond, void>::type    \
+    >
 
 /**
- * @brief Visit function with arguments.This only visits basic types.
- * 
- * If you need to be able to determine if an atom or array code was passed,
- * use Visit(K, Fn, Args&&) instead.
- * 
- * @tparam Fn : function to apply with arguments (Type<size_>, Args...);
- * @tparam Args : additional arguments to the function
- * @param code : runtime type code of a kdb K object
- * @param function : function to apply to (Type<size_t>, Args..);
- * @param args : additional arguments to function.
- * @return auto 
+ * @brief Find index of T in U,Us...
  */
-template<typename Fn, typename... Args>
-auto Visit(Fn function, int8_t code, Args&&... args)
+template <typename T, typename U, typename... Us>
+class index_of
 {
-    switch (std::abs(code))
+public:
+    static constexpr size_t value = type_to_idx<T, U, Us...>();
+
+private:
+
+    template<typename _T, typename _U, typename... _Us>
+    constexpr size_t type_to_idx(size_t idx = 0)
     {
-        case 0:     return function(Mixed(), std::forward<Args>(args)...);
-        case KB:    return function(Boolean(), std::forward<Args>(args)...);
-        case UU:    return function(Guid(), std::forward<Args>(args)...);
-        case KG:    return function(Byte(), std::forward<Args>(args)...);
-        case KH:    return function(Short(), std::forward<Args>(args)...);
-        case KI:    return function(Integer(), std::forward<Args>(args)...);
-        case KJ:    return function(Long(), std::forward<Args>(args)...);
-        case KE:    return function(Real(), std::forward<Args>(args)...);
-        case KF:    return function(Float(), std::forward<Args>(args)...);
-        case KC:    return function(Char(), std::forward<Args>(args)...);
-        case KS:    return function(Symbol(), std::forward<Args>(args)...);
-        case KP:    return function(Timestamp(), std::forward<Args>(args)...);
-        case KM:    return function(Month(), std::forward<Args>(args)...);
-        case KD:    return function(Date(), std::forward<Args>(args)...);
-        case KN:    return function(Timespan(), std::forward<Args>(args)...);
-        case KU:    return function(Minute(), std::forward<Args>(args)...);
-        case KV:    return function(Second(), std::forward<Args>(args)...);
-        case KT:    return function(Time(), std::forward<Args>(args)...);
-        case KZ:    return function(Datetime(), std::forward<Args>(args)...);
-        case 128:   return function(Error(), std::forward<Args>(args)...);
+        if constexpr (std::is_same_v<T,U>)
+            return idx;
+        static_assert(sizeof...(Us) > 0, "Failed to find index of type");
+        return type_to_idx<T, Us...>(idx + 1);        
     }
-    std::ostringstream s;
-    s << "Attempted to visit on unknown KDB type code " << std::to_string(code) << ".";
-    throw std::invalid_argument(s.str());
-}
+};
 
-/**
- * @brief Visitor on runtime type code of karr. Passes karr and args to function.
- */
-template<typename Fn, typename... Args>
-auto Visit(Fn function, K karr, Args&&... args)
-{
-    if (karr == nullptr)
-        throw std::invalid_argument("Cannot visit a null K object");
-    return Visit(function, karr->t, karr, std::forward<Args>(args)...);
-}
-
-// std::string to_name(int8_t code)
-// {
-//     auto name = Visit([](const auto& t){ return t.name; }, code);
-//     std::string suffix = code < 0 ? " Atom" : " List";
-//     return name + suffix;
-// }
+template <typename T, typename... Ts>
+constexpr std::size_t index_of_v = index_of<T, Ts...>::value;
 
 }
