@@ -31,12 +31,13 @@ public:
                         internal::is_instance_type<T, Vector>::value ||
                         internal::is_instance_class<T, Tuple>::value,
                         "T must be a qbind wrapper type: Atom, Vector, Tuple, Map, Table, KeyedTable");
-        auto res = value.get().release();
+        
         // If the k object is one of the arguments passed in it must be r1'ed before return.
-        // This is here for the add example only where we assign to an existing atom.
-        // TODO: Fix converter so that it knows if it needs to increment by one on return.
-        return res;
-        //r1(res);
+        // However, we r1 all arguments in to_cpp. The non-returned arguments will be r0'ed
+        // by their K destructor. Release means the K will be left with a nullptr meaning when
+        // it is destructed it doesn't call r0, meaning the original r1 of the argument is
+        // preserved.
+        return value.get().release();
     }
 };
 

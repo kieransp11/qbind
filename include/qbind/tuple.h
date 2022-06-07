@@ -36,10 +36,9 @@ public:
             ++idx;
         } (), ...);
 
-        // make non owning, then get from it. This allows ::K formed by knk
-        // to take ownership. Effectively r1(elements.get().get()).
+        // get returns an independent copy of the pointer so knk can take ownership
         m_ptr = K{knk(sizeof...(Types),
-                    K::make_non_owning(elements.get().get()).get()...
+                    elements.get().get()...
                     )};
     }
 
@@ -109,6 +108,11 @@ public:
     }
 
     static constexpr TypeClass TypeInfo{0};
+
+    K get() const
+    {
+        return m_ptr;
+    }
 
 private:
 
