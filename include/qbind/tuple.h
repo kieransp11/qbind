@@ -120,7 +120,7 @@ private:
 
     ::K get_idx(size_t pos)
     {
-        return *(static_cast<::K *>(m_ptr.data()) + pos);
+        return static_cast<::K *>(m_ptr.data())[pos];
     }
 
     // Type checking
@@ -128,11 +128,16 @@ private:
     template<size_t Depth, size_t Idx, class Type, class... InnerTypes>
     static void check_type_match_impl(::K data)
     {
-        ::K entry = *(reinterpret_cast<::K*>(data->G0) + Idx);
+        ::K entry = reinterpret_cast<::K*>(data->G0)[Idx];
         // If type is a tuple recurse depth and start at index 0
         if constexpr (internal::is_instance_class<Type, Tuple>::value)
         {
             Type::template check_type_match<Depth+1, 0>(entry);
+            return;
+        }
+        if constexpr (internal::is_instance_type<Type, NestedVector>::value)
+        {
+            Type::check_type(data);
             return;
         }
 

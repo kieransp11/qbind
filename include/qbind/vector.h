@@ -19,20 +19,20 @@ class SymbolReference
 public:
 
     operator const char*() const {
-        return *m_ptr;
+        return m_ptr;
     }
 
     SymbolReference& operator=(char* value)
     {
-        *m_ptr = ss(value);
+        m_ptr = ss(value);
         return *this;
     }
 
 private:
     // where the symbol is located.
-    char **m_ptr;
+    char *&m_ptr;
 
-    SymbolReference(char** ptr)
+    SymbolReference(char*& ptr)
     :m_ptr(ptr)
     { }
 
@@ -46,22 +46,19 @@ class Vector
 public:
 
     static constexpr TypeClass TypeInfo{static_cast<short int>(T)};
-
+    // To access underlying data
     using Underlier = typename internal::c_type<T>::Underlier;
+    
+    // What is actually returned (const accessors)
+    using result = std::conditional_t<T == Type::Symbol, const char *, Underlier>;
 
-    using reference = Underlier &;
-    using const_reference = const Underlier &;
+    using reference = std::conditional_t<T==Type::Symbol,
+        SymbolReference,
+        Underlier &>;
+    using const_reference = result const &;
 
     using pointer = Underlier*;
-    using const_pointer = const Underlier*;
-
-
-    using ptr_to_const = const char *;
-    using ref_to_ptr_to_const = const char *&;
-    using ptr_to_ptr_to_const = const char **;
-    // Const reference to const char *. This comes from const T& === T const&.
-    using const_ref_to_ptr_to_const = const char *const &;
-    using const_ptr_to_ptr_to_const = const char *const *;
+    using const_pointer = result const *;
 
     // Initialise from a K object
     Vector(K data)
@@ -139,142 +136,67 @@ public:
         m_ptr = K{size.has_value() ? kpn(str, size.value()) : kp(str)};
     }
 
-    // Element access for non symbols. No risk of editing in place here as there
-    // is no interning. This interface is effectively a normal vector/array
+    // Element access. 
+    // For non-symbols and const vectors of symbols this is effectively a normal 
+    // vector/array. For non-const symbols we have to be careful about editing 
+    // here due to the need to intern data. const versions of methods may return
+    // vanilla types, but non-const must return a ref-wrapper that when assigned
+    // to interns the presented data.
     // at
-    DISABLE_IF_SYMBOL
     reference at(size_t pos) 
     {
         check_in_range();
-        return *(static_cast<Underlier *>(m_ptr.data()) + pos);
+        return static_cast<Underlier *>(m_ptr.data())[pos];
     }
 
-    DISABLE_IF_SYMBOL
     const_reference at(size_t pos) const 
     {
         check_in_range();
-        return *(static_cast<Underlier *>(m_ptr.data()) + pos);
+        return static_cast<Underlier *>(m_ptr.data())[pos];
     }
 
     // []
-    DISABLE_IF_SYMBOL
     reference operator[](size_t pos) 
     {
-        return *(static_cast<Underlier *>(m_ptr.data()) + pos);
+        return static_cast<Underlier *>(m_ptr.data())[pos];
     }
 
-    DISABLE_IF_SYMBOL
     const_reference operator[](size_t pos) const 
     {
-        return *(static_cast<Underlier *>(m_ptr.data()) + pos);
+        return static_cast<Underlier *>(m_ptr.data())[pos];
     }
 
     // front
-    DISABLE_IF_SYMBOL
     reference front() 
     {
-        return *static_cast<Underlier *>(m_ptr.data());
+        return static_cast<Underlier *>(m_ptr.data())[0];
     }
 
-    DISABLE_IF_SYMBOL
     const_reference front() const 
     {
-        return *static_cast<Underlier *>(m_ptr.data());
+        return static_cast<Underlier *>(m_ptr.data())[0];
     }
 
     // back
-    DISABLE_IF_SYMBOL
     reference back() 
     {
-        return *(static_cast<Underlier *>(m_ptr.data()) + m_ptr.size() - 1);
+        return static_cast<Underlier *>(m_ptr.data())[m_ptr.size() - 1];
     }
 
-    DISABLE_IF_SYMBOL
     const_reference back() const 
     {
-        return *(static_cast<Underlier *>(m_ptr.data()) + m_ptr.size() - 1);
+        return static_cast<Underlier *>(m_ptr.data())[m_ptr.size() - 1];
     }
 
     // data
+    // Not available for data as don't want to expose data that need to be interned.
     DISABLE_IF_SYMBOL
     pointer data() 
     {
         return static_cast<Underlier *>(m_ptr.data());
     }
 
-    DISABLE_IF_SYMBOL
     const_pointer data() const 
-    {
-        return static_cast<Underlier *>(m_ptr.data());
-    }
-
-    // Element access for symbols. Have to be careful about editing here
-    // due to the need to intern data. const versions of methods may return
-    // vanilla types, but non-const must return a ref-wrapper that when assigned
-    // to interns the presented data.
-    // at
-    ENABLE_IF_SYMBOL
-    SymbolReference at(size_t pos) 
-    {
-        check_in_range();
-        return {static_cast<char**>(m_ptr.data()) + pos};
-    }
-
-    ENABLE_IF_SYMBOL
-    const_ref_to_ptr_to_const at(size_t pos) const 
-    {
-        check_in_range();
-        return *(static_cast<char **>(m_ptr.data()) + pos);
-    }
-
-    // []
-    ENABLE_IF_SYMBOL
-    SymbolReference operator[](size_t pos) 
-    {
-        return {static_cast<char**>(m_ptr.data()) + pos};
-    }
-
-    ENABLE_IF_SYMBOL
-    const_ref_to_ptr_to_const operator[](size_t pos) const 
-    {
-        return *(static_cast<char **>(m_ptr.data()) + pos);
-    }
-
-    // front
-    ENABLE_IF_SYMBOL
-    SymbolReference front() 
-    {
-        return {static_cast<char**>(m_ptr.data())};
-    }
-
-    ENABLE_IF_SYMBOL
-    const_ref_to_ptr_to_const front() const 
-    {
-        return *static_cast<char**>(m_ptr.data());
-    }
-
-    // back
-    ENABLE_IF_SYMBOL
-    SymbolReference back() 
-    {
-        return {static_cast<char**>(m_ptr.data()) + m_ptr.size() - 1};
-    }
-
-    ENABLE_IF_SYMBOL
-    const_ref_to_ptr_to_const back() const 
-    {
-        return *(static_cast<char **>(m_ptr.data()) + m_ptr.size() - 1);
-    }
-
-    // data
-    // ENABLE_IF_SYMBOL
-    // pointer data() 
-    // {
-    //     return static_cast<Underlier *>(m_ptr.data());
-    // }
-
-    ENABLE_IF_SYMBOL
-    const_ptr_to_ptr_to_const data() const 
     {
         return static_cast<Underlier *>(m_ptr.data());
     }
@@ -283,7 +205,7 @@ public:
     // begin/cbegin
     // end/cend
     // rbegin/crbegin
-    // rend//crend
+    // rend/crend
 
     // Capacity
     // reserve, capacity, and shrink_to_fit don't make sense given memory management.
@@ -303,8 +225,9 @@ public:
     }
 
     // Modifiers
-    // clear, insert, emplace, erase, emplace_back, pop_back, resize, swap
-    // don't make sense given memory management.
+    // erase, pop_back, resize don't make sense given memory management.
+    // TODO: clear, insert, emplace, emplace_back, swap
+
     void push_back(Underlier value)
     {
         if constexpr(T == Type::Symbol)

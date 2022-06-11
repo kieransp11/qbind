@@ -11,6 +11,9 @@ class Atom;
 template <Type>
 class Vector;
 
+template <Type>
+class NestedVector;
+
 template <class... Types>
 class Tuple;
 

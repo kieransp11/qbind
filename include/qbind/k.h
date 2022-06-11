@@ -139,6 +139,9 @@ private:
     template <Type>
     friend class Vector;
 
+    template <Type>
+    friend class NestedVector;
+
     void join_atom(void* value)
     {
         m_k = ja(&m_k, value);

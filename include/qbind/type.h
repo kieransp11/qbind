@@ -41,13 +41,28 @@ enum class Type : signed char
 class TypeClass
 {
 public:
-    constexpr TypeClass(signed char t) noexcept
+    /**
+     * @brief Make a description of the type which is useful for
+     * compile time checks. Types may throw at runtime if construction
+     * fails.
+     * 
+     * Possible states:
+     *  - t == -128 && !nested: Error
+     *  - t in [-19,-1] except -3 && !nested: Atom
+     *  - t in [1, 19] except 3 && !nested: Vector
+     *  - t in [1, 19] except 3 && nested: Nested Vector
+     *  - t == 98 && !nested: Table
+     *  - t == 99 && !nested: Dictionary
+     * Otherwise, unknown.
+     */
+    constexpr TypeClass(signed char t, bool nested = false) noexcept
     :m_t(t)
+    ,m_nested(nested)
     { }
 
     Type type() const
     {
-        if (isAtom() || isVector())
+        if (isAtom() || isVector() || isNested())
         {
             return Type(abs(m_t));
         }
@@ -58,37 +73,42 @@ public:
 
     constexpr bool isError() const noexcept
     {
-        return m_t == -128;
+        return m_t == -128 && !m_nested;
     }
 
     constexpr bool isAtom() const noexcept
     {
-        return -19 <= m_t && m_t <= -1 && m_t != -3;
+        return -19 <= m_t && m_t <= -1 && m_t != -3 && !m_nested;
     }
 
     constexpr bool isTuple() const noexcept
     {
-        return m_t == 0;
+        return m_t == 0 && !m_nested;
     }
 
     constexpr bool isVector() const noexcept
     {
-        return 1 <= m_t && m_t <= 19 && m_t != 3;
+        return 1 <= m_t && m_t <= 19 && m_t != 3 && !m_nested;
+    }
+
+    constexpr bool isNested() const noexcept
+    {
+        return 1 <= m_t && m_t <= 19 && m_t != 3 && m_nested;
     }
 
     constexpr bool isTable() const noexcept
     {
-        return m_t == 98;
+        return m_t == 98 && !m_nested;
     }
 
     constexpr bool isDictionary() const noexcept
     {
-        return m_t == 99;
+        return m_t == 99 && !m_nested;
     }
 
     constexpr bool isUnknown() const noexcept
     {
-        return !(isError() || isAtom() || isTuple() || isVector() || isTable() || isDictionary());
+        return !(isError() || isAtom() || isTuple() || isVector() || isNested() || isTable() || isDictionary());
     }
 
     friend auto operator<<(std::ostream& os, TypeClass const& tc) -> std::ostream& {
@@ -100,6 +120,8 @@ public:
             return os << "Tuple";
         if (tc.isVector())
             return os << type_txt[tc.m_t - 1] << " Vector";
+        if (tc.isNested())
+            return os << type_txt[tc.m_t - 1] << " Nested Vector";
         if (tc.isTable())
             return os << "Table";
         if (tc.isDictionary())
@@ -109,15 +131,21 @@ public:
 
     constexpr bool operator==(const TypeClass& rhs) const
     {
-        return m_t == rhs.m_t;
+        return m_t == rhs.m_t && m_nested == rhs.m_nested;
     }
     constexpr bool operator!=(const TypeClass& rhs) const
     {
-        return m_t != rhs.m_t;
+        return m_t != rhs.m_t || m_nested != rhs.m_nested;
+    }
+
+    static const char* name(Type t)
+    {
+        return type_txt[static_cast<signed char>(t) - 1];
     }
 
 private:
     signed char m_t;
+    bool m_nested;
 
     static const char *type_txt[];
 };
