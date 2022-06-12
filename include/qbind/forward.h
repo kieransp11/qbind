@@ -110,4 +110,49 @@ using Time      = qbind::Vector<Type::Time>;
 } // namespace vector
 
 using String = qbind::Vector<Type::Char>;
+
+namespace n
+{
+using b = qbind::NestedVector<Type::Boolean>;
+using g = qbind::NestedVector<Type::GUID>;
+using x = qbind::NestedVector<Type::Byte>;
+using h = qbind::NestedVector<Type::Short>;
+using i = qbind::NestedVector<Type::Int>;
+using j = qbind::NestedVector<Type::Long>;
+using e = qbind::NestedVector<Type::Real>;
+using f = qbind::NestedVector<Type::Float>;
+using c = qbind::NestedVector<Type::Char>;   
+using s = qbind::NestedVector<Type::Symbol>;
+using p = qbind::NestedVector<Type::Timestamp>; 
+using m = qbind::NestedVector<Type::Month>; 
+using d = qbind::NestedVector<Type::Date>;
+using z = qbind::NestedVector<Type::Datetime>; 
+using n = qbind::NestedVector<Type::Timespan>;
+using u = qbind::NestedVector<Type::Minute>;
+using v = qbind::NestedVector<Type::Second>;  
+using t = qbind::NestedVector<Type::Time>;   
+} // namespace n
+
+namespace nested_vector
+{
+using Boolean   = qbind::NestedVector<Type::Boolean>;
+using GUID      = qbind::NestedVector<Type::GUID>;
+using Byte      = qbind::NestedVector<Type::Byte>;
+using Short     = qbind::NestedVector<Type::Short>;
+using Int       = qbind::NestedVector<Type::Int>;
+using Long      = qbind::NestedVector<Type::Long>;
+using Real      = qbind::NestedVector<Type::Real>;
+using Float     = qbind::NestedVector<Type::Float>;
+using Char      = qbind::NestedVector<Type::Char>;   
+using Symbol    = qbind::NestedVector<Type::Symbol>;
+using Timestamp = qbind::NestedVector<Type::Timestamp>; 
+using Month     = qbind::NestedVector<Type::Month>; 
+using Date      = qbind::NestedVector<Type::Date>;
+using Datetime  = qbind::NestedVector<Type::Datetime>; 
+using Timespan  = qbind::NestedVector<Type::Timespan>;
+using Minute    = qbind::NestedVector<Type::Minute>;
+using Second    = qbind::NestedVector<Type::Second>;  
+using Time      = qbind::NestedVector<Type::Time>; 
+} // namespace vector
+
 }
