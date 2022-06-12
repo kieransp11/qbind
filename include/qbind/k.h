@@ -35,6 +35,12 @@ public:
     : m_k(k)
     { }
 
+    // Make a non-owning K. 
+    static K make_non_owning(::K k)
+    {
+        return K(_r1(k));
+    }
+
     // Copy constructors
     K(const K& other) noexcept
     :m_k(_r1(other.m_k))
@@ -120,9 +126,9 @@ public:
 
     template<class T>
     typename std::enable_if_t<
-        internal::is_instance_type<T, Atom>::value ||
-        internal::is_instance_type<T, Vector>::value ||
-        internal::is_instance_type<T, NestedVector>::value, bool>
+        internal::is_instance_type_v<T, Atom> ||
+        internal::is_instance_type_v<T, Vector> ||
+        internal::is_instance_type_v<T, NestedVector>, bool>
     is() const noexcept
     {
         const auto tc = inner_type(m_k);
@@ -135,9 +141,9 @@ public:
 
     template<class T>
     typename std::enable_if_t<
-        internal::is_instance_type<T, Atom>::value ||
-        internal::is_instance_type<T, Vector>::value ||
-        internal::is_instance_type<T, NestedVector>::value, void>
+        internal::is_instance_type_v<T, Atom> ||
+        internal::is_instance_type_v<T, Vector> ||
+        internal::is_instance_type_v<T, NestedVector>, void>
     is_with_info() const
     {
         const auto tc = inner_type(m_k);
@@ -221,19 +227,9 @@ private:
         m_k = jk(&m_k, _r1(k.m_k));
     }
 
-    ::K get() const
-    {
-        return _r1(m_k);
-    }
-
     friend class Converter;
 
     // For Converter and Tuple
-    // Make a non-owning array. 
-    static K make_non_owning(::K k)
-    {
-        return K(_r1(k));
-    }
 
     // For Converter.
     // Use to get the internal pointer and return back to 

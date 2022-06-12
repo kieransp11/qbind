@@ -76,7 +76,7 @@ public:
         } (), ...);
 
         m_ptr = K{knk(sizeof...(Args),
-                    args.get().get()...
+                    args.get().release()...
                     )};
     }
 

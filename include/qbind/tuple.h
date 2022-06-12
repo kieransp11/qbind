@@ -38,7 +38,7 @@ public:
 
         // get returns an independent copy of the pointer so knk can take ownership
         m_ptr = K{knk(sizeof...(Types),
-                    elements.get().get()...
+                    elements.get().release()...
                     )};
     }
 
@@ -93,7 +93,7 @@ public:
     template<typename T>
     Tuple<Types..., T> cat(T value)
     {
-        m_ptr.tuple_append(value.get().get());
+        m_ptr.tuple_append(value.get().release());
         return {m_ptr};
     }
 

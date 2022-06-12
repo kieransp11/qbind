@@ -13,11 +13,17 @@ struct is_instance_class : public std::false_type {};
 template <class...Ts, template <class...> class U>
 struct is_instance_class<U<Ts...>, U> : public std::true_type {};
 
+template <class T, template <class...> class U>
+constexpr bool is_instance_class_v = is_instance_class<T, U>::value;
+
 template<class, template <Type...> class>
 struct is_instance_type : public std::false_type {};
 
 template <Type...Ts, template <Type...> class U>
 struct is_instance_type<U<Ts...>, U> : public std::true_type {};
+
+template <class T, template <Type...> class U>
+constexpr bool is_instance_type_v = is_instance_type<T, U>::value;
 
 // Symbol helpers
 

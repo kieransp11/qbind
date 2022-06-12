@@ -14,9 +14,9 @@ public:
     template<class T>
     static T to_cpp(::K arr)
     {
-        static_assert(  internal::is_instance_type<T, Atom>::value ||
-                        internal::is_instance_type<T, Vector>::value ||
-                        internal::is_instance_class<T, Tuple>::value,
+        static_assert(  internal::is_instance_type_v<T, Atom> ||
+                        internal::is_instance_type_v<T, Vector> ||
+                        internal::is_instance_class_v<T, Tuple>,
                         "T must be a qbind wrapper type: Atom, Vector, Tuple, Map, Table, KeyedTable");
         // Must be non-owning as kdb decrements arguments ref count on completion anyway.
         // This avoid a double-free by incrementing the ref-count when making as a non-owning K.
@@ -27,9 +27,9 @@ public:
     template<class T>
     static ::K to_q(T value)
     {
-        static_assert(  internal::is_instance_type<T, Atom>::value ||
-                        internal::is_instance_type<T, Vector>::value ||
-                        internal::is_instance_class<T, Tuple>::value,
+        static_assert(  internal::is_instance_type_v<T, Atom> ||
+                        internal::is_instance_type_v<T, Vector> ||
+                        internal::is_instance_class_v<T, Tuple>,
                         "T must be a qbind wrapper type: Atom, Vector, Tuple, Map, Table, KeyedTable");
         
         // If the k object is one of the arguments passed in it must be r1'ed before return.
