@@ -4,7 +4,6 @@
 
 #include <kx/kx.h>
 
-#include "forward.h"
 #include "k.h"
 #include "type.h"
 
@@ -243,5 +242,51 @@ private:
 
     K m_ptr;
 };
+
+namespace v
+{
+using b = qbind::Vector<Type::Boolean>;
+using g = qbind::Vector<Type::GUID>;
+using x = qbind::Vector<Type::Byte>;
+using h = qbind::Vector<Type::Short>;
+using i = qbind::Vector<Type::Int>;
+using j = qbind::Vector<Type::Long>;
+using e = qbind::Vector<Type::Real>;
+using f = qbind::Vector<Type::Float>;
+using c = qbind::Vector<Type::Char>;   
+using s = qbind::Vector<Type::Symbol>;
+using p = qbind::Vector<Type::Timestamp>; 
+using m = qbind::Vector<Type::Month>; 
+using d = qbind::Vector<Type::Date>;
+using z = qbind::Vector<Type::Datetime>; 
+using n = qbind::Vector<Type::Timespan>;
+using u = qbind::Vector<Type::Minute>;
+using v = qbind::Vector<Type::Second>;  
+using t = qbind::Vector<Type::Time>;   
+} // namespace v
+
+namespace vector
+{
+using Boolean   = qbind::Vector<Type::Boolean>;
+using GUID      = qbind::Vector<Type::GUID>;
+using Byte      = qbind::Vector<Type::Byte>;
+using Short     = qbind::Vector<Type::Short>;
+using Int       = qbind::Vector<Type::Int>;
+using Long      = qbind::Vector<Type::Long>;
+using Real      = qbind::Vector<Type::Real>;
+using Float     = qbind::Vector<Type::Float>;
+using Char      = qbind::Vector<Type::Char>;   
+using Symbol    = qbind::Vector<Type::Symbol>;
+using Timestamp = qbind::Vector<Type::Timestamp>; 
+using Month     = qbind::Vector<Type::Month>; 
+using Date      = qbind::Vector<Type::Date>;
+using Datetime  = qbind::Vector<Type::Datetime>; 
+using Timespan  = qbind::Vector<Type::Timespan>;
+using Minute    = qbind::Vector<Type::Minute>;
+using Second    = qbind::Vector<Type::Second>;  
+using Time      = qbind::Vector<Type::Time>; 
+} // namespace vector
+
+using String = qbind::Vector<Type::Char>;
 
 }
