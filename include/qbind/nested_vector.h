@@ -28,7 +28,8 @@ class NestedVector
 {
 public:
     
-    static constexpr TypeClass TypeInfo{static_cast<short int>(T), true};
+    static constexpr Type Type = T;
+    static constexpr Structure Structure = Structure::NestedVector;
 
     using Underlier = typename internal::c_type<T>::Underlier;
 
@@ -54,7 +55,7 @@ public:
     NestedVector(K data)
     :m_ptr(std::move(data))
     {
-        check_type(m_ptr);
+        m_ptr.is_with_info<NestedVector<T>>();
     }
 
     template<class... Args>
@@ -158,7 +159,7 @@ public:
      */
     void push_back(Underlier value)
     {
-        if (!m_ptr.typeClass().isVector())
+        if (!m_ptr.is<Vector<T>>())
             throw std::runtime_error("Nested vector is not flat, cannot append underlier.");
         if constexpr(T == Type::Symbol)
         {
@@ -173,24 +174,24 @@ public:
     // Add atom if root of nested vector is tuple
     void push_back(Atom<T> value)
     {
-        if (!m_ptr.typeClass().isTuple())
-            throw std::runtime_error("Nested vector is flat, cannot append atom to flat vector.");
+        if (m_ptr.is<Atom<T>>() || m_ptr.is<Vector<T>>())
+            throw std::runtime_error("Nested vector is not tuple-based, cannot append atom.");
         m_ptr.tuple_append(value.get());
     }
 
     // Add vector if root of nested vector is tuple
     void push_back(Vector<T> value)
     {
-        if (!m_ptr.typeClass().isTuple())
-            throw std::runtime_error("Nested vector is flat, cannot append vector to flat vector.");
+        if (m_ptr.is<Atom<T>>() || m_ptr.is<Vector<T>>())
+            throw std::runtime_error("Nested vector is not tuple-based, cannot append atom.");
         m_ptr.tuple_append(value.get());
     }
 
     // Add vector if root of nested vector is tuple
     void push_back(NestedVector<T> value)
     {
-        if (!m_ptr.typeClass().isTuple())
-            throw std::runtime_error("Nested vector is flat, cannot append nested vector to flat vector.");
+        if (m_ptr.is<Atom<T>>() || m_ptr.is<Vector<T>>())
+            throw std::runtime_error("Nested vector is not tuple-based, cannot append atom.");
         m_ptr.tuple_append(value.get());
     }
 
@@ -219,49 +220,6 @@ private:
         return reinterpret_cast<::K *>(k.data())[idx];
     }
 
-    static void check_type_impl(::K k)
-    {
-        // dont allow null pointers
-        if (!k)
-            throw std::runtime_error("Nested vector contains nullptr");
-        // vector or atom.
-        if (abs(k->t) == static_cast<signed char>(T))
-            return;
-        // wrong type
-        if (k->t != 0)
-        {
-            std::ostringstream ss;
-            ss << "Nested Vector of type " << TypeClass::name(T) << " should not contain " << TypeClass(k->t);
-            throw std::runtime_error(ss.str());
-        }
-        // recurse nested
-        for (auto i = 0; i < k->n; ++i)
-            check_type(get_idx(k, i));
-    }
-
-
-    // for type checking
-    template <class... Args>
-    friend class Tuple;
-
-    static void check_type(K k)
-    {
-        if (!k)
-            throw std::runtime_error("K is empty");
-        auto tc = k.typeClass();
-        if (tc.isVector() && tc.type() == T)
-            return;
-        if (tc.isTuple())
-        {
-            for (auto i = 0; i < k.size(); ++i)
-            {
-                check_type_impl(get_idx(k, i));
-            }
-            return;
-        }
-        throw std::runtime_error("K must be vector or tuple at first level");
-    }
-
     template<bool throws>
     std::monostate return_or_throw(std::string err)
     {
@@ -282,7 +240,10 @@ private:
         if (idxs.front() >= m_ptr.size())
             return return_or_throw<throws>("Index out of range on first index.");
 
-        if (m_ptr.typeClass().isVector())
+        if (m_ptr.is<Atom<T>>())
+            return return_or_throw<throws>("Attempted to index atom on first index.");
+
+        if (m_ptr.is<Vector<T>>())
         {
             if (idxs.size() != 1)
                 return return_or_throw<throws>("Not on last index. Attempted to index flat vector on index 0");

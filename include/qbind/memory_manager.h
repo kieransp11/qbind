@@ -8,13 +8,8 @@
 
 namespace qbind {
 
-// forward
-void initialise();
-
-namespace memory {
-
 /**
- * @brief Control threading specific memory options.
+ * @brief Control memory options.
  *
  * Implements memory functions:
  *  - V m9(V)
@@ -22,10 +17,18 @@ namespace memory {
  * Also implements memory-system initialisation using:
  *  - I khp(S, I);
  */
-class ThreadMemoryManager
+class MemoryManager
 {
 public:
-    ~ThreadMemoryManager()
+
+    // Initialise the memory system once and only once per thread.
+    // Ensures the de-initialisation on thread termination too.
+    static void initialise()
+    {
+        thread_local qbind::MemoryManager mm;
+    }
+
+    ~MemoryManager()
     {
         std::lock_guard<std::mutex> lk(m_mutex);
         m_active_managers -= 1;
@@ -43,7 +46,7 @@ public:
     }
 
 private:
-    ThreadMemoryManager()
+    MemoryManager()
     {
         std::lock_guard<std::mutex> lk(m_mutex);
         if (!m_main_thread)
@@ -66,21 +69,10 @@ private:
     static std::unique_ptr<std::thread::id> m_main_thread;
     static size_t m_active_managers;
     static std::mutex m_mutex;
-
-    friend void qbind::initialise();
 };
 
-std::unique_ptr<std::thread::id> ThreadMemoryManager::m_main_thread;
-size_t ThreadMemoryManager::m_active_managers;
-std::mutex ThreadMemoryManager::m_mutex;
-
-} // qbind::memory
-
-// Initialise the memory system once and only once per thread.
-// Ensures the de-initialisation on thread termination too.
-void initialise()
-{
-    thread_local qbind::memory::ThreadMemoryManager mm;
-}
+std::unique_ptr<std::thread::id> MemoryManager::m_main_thread;
+size_t MemoryManager::m_active_managers;
+std::mutex MemoryManager::m_mutex;
 
 } // qbind

@@ -21,7 +21,8 @@ class Atom
 {
 public:
 
-    static constexpr TypeClass TypeInfo{-static_cast<short int>(T)};
+    static constexpr Type Type = T;
+    static constexpr Structure Structure = Structure::Atom;
 
     using Underlier = typename internal::c_type<T>::Underlier;
 
@@ -31,20 +32,7 @@ public:
     {
         if (!m_ptr)
             throw std::runtime_error("K is empty");
-        const auto tc = m_ptr.typeClass();
-        if (!tc.isAtom())
-        {
-            std::ostringstream ss;
-            ss << "K is not an atom. Received type: " << tc;
-            throw std::runtime_error(ss.str());
-        }
-        if (tc.type() != T)
-        {
-            const TypeClass expected_tc(-static_cast<signed char>(T));
-            std::ostringstream ss;
-            ss << "Expected K to be " << expected_tc << " but found " << tc;
-            throw std::runtime_error(ss.str());
-        }
+        m_ptr.is_with_info<Atom<T>>();
     }
 
     // Initialise from value

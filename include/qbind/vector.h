@@ -28,16 +28,13 @@ public:
         return *this;
     }
 
-private:
-    // where the symbol is located.
-    char *&m_ptr;
-
     SymbolReference(char*& ptr)
     :m_ptr(ptr)
     { }
 
-    template <Type>
-    friend class Vector;
+private:
+    // where the symbol is located.
+    char *&m_ptr;
 };
 
 template <Type T>
@@ -45,7 +42,9 @@ class Vector
 {
 public:
 
-    static constexpr TypeClass TypeInfo{static_cast<short int>(T)};
+    static constexpr Type Type = T;
+    static constexpr Structure Structure = Structure::Vector;
+
     // To access underlying data
     using Underlier = typename internal::c_type<T>::Underlier;
     
@@ -66,20 +65,7 @@ public:
     {
         if (!m_ptr)
             throw std::runtime_error("K is empty");
-        const auto tc = m_ptr.typeClass();
-        if (!tc.isVector())
-        {
-            std::ostringstream ss;
-            ss << "K is not a vector. Received type: " << tc;
-            throw std::runtime_error(ss.str());
-        }
-        if (tc.type() != T)
-        {
-            const TypeClass expected_tc(static_cast<signed char>(T));
-            std::ostringstream ss;
-            ss << "Expected K to be " << expected_tc << " but found " << tc;
-            throw std::runtime_error(ss.str());
-        }
+        m_ptr.is_with_info<Vector<T>>();
     }
 
     // Create empty array of set length
@@ -126,7 +112,7 @@ public:
         }
     }
 
-    template<Type Q=T, typename = typename std::enable_if<Q == Type::Char>::type>
+    template<qbind::Type Q=T, typename = typename std::enable_if<Q == Type::Char>::type>
     Vector(char *str, std::optional<int64_t> size = std::nullopt)
     {
         if (str == nullptr)
