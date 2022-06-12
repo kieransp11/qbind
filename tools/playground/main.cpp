@@ -5,12 +5,14 @@
 
 #include <string>
 #include <vector>
+#include <variant>
 
 #include <kx/kx.h>
 
 #include "qbind/memory_manager.h"
 #include "qbind/atom.h"
 #include "qbind/vector.h"
+#include "qbind/nested_vector.h"
 #include "qbind/tuple.h"
 
 void print(std::string x)
@@ -41,6 +43,10 @@ void task1()
  */
 void check_element_access()
 {
+    // std::variant<int, long> v1;
+    // std::variant<const int, const long> v2;
+    // v2 = v1;
+
     qbind::Vector<qbind::Type::Short> vec{1, 2, 3, 4, 5};
 
     std::cout << std::to_string(vec.front()) << " " << std::to_string(vec.back()) << std::endl;
@@ -92,14 +98,15 @@ qbind::Tuple<
 
 int main()
 {
-    qbind::initialise();
+    qbind::MemoryManager::initialise();
 
 
     //std::tuple<int,long,short> t;
     
 
     // Checks
-    //check_element_access();
+    check_element_access();
+    return 0;
     {
         auto x = check_tuple_type_checking();
         std::cout << "START" << std::endl;
@@ -116,7 +123,7 @@ int main()
 
     qbind::Atom<qbind::Type::Symbol> qatom("qsymbol");
 
-    std::cout << "here" <<  (qatom.TypeInfo == qbind::TypeClass(-11)) << std::endl;
+    std::cout << "here" <<  (qatom.Type == qbind::Type::Symbol) << (qatom.Structure == qbind::Structure::Atom) << std::endl;
 
     // This throws if not const
     const char *qatomdata = qatom;

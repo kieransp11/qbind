@@ -178,6 +178,70 @@ public:
             throw std::runtime_error(res.value());
     }
 
+    // Appending
+    // TODO: Check what these functions do to lhs, rhs and returned reference count.
+
+    template<Type T>
+    void join_atom(typename internal::c_type<T>::Underlier value)
+    {
+        if (!m_k)
+            throw std::runtime_error("Cannot append to null");
+        // make sure array is of the right type.
+        if (m_k->t != static_cast<signed char>(T))
+        {
+            std::ostringstream ss;
+            ss << "Array is not vector of " << T;
+            throw std::runtime_error(ss.str());
+        }
+        // Intern symbols and use js, else use ja with void*
+        m_k = T == Type::Symbol ? js(&m_k, ss(value)) : ja(&m_k, &value);
+    }
+
+    // Append a K list y to K list x. Both lists must be of the same type.
+    void join_lists(K k)
+    {
+        if (!m_k)
+            throw std::runtime_error("Cannot append to null");
+        if (!k.m_k)
+            throw std::runtime_error("Cannot append null");
+        if (m_k->t != k.m_k->t || m_k->t < 0)
+            throw std::runtime_error("Can only join list on to list");
+        m_k = jv(&m_k, k.m_k);
+    }
+
+    // Appends another K object to a mixed list.
+    void tuple_append(K k)
+    {
+        if (!m_k)
+            throw std::runtime_error("Cannot append to null");
+        if (!k.m_k)
+            throw std::runtime_error("Cannot append null");
+        if (m_k->t != 0 || k.m_k->t < 0)
+            throw std::runtime_error("Can only append tuple to tuple");
+        // Takes ownership of a reference to its argument y.
+        // We use r1 to ensure everything maintains ownership.
+        m_k = jk(&m_k, _r1(k.m_k));
+    }
+
+    /**
+     * @brief Release managed pointer back to manually managed.
+     * 
+     * This only releases from this qbind::K, so when this qbind::K is  
+     * destructed the KX K will not be r0ed. 
+     * 
+     * Upon release the programmer is responsible for only their subsequent
+     * reference increments and decrements, all other qbind::K objects will 
+     * continue to remove their references as they're destructed.
+     * 
+     * @return ::K 
+     */
+    ::K release() noexcept
+    {
+        auto temp = m_k;
+        m_k = nullptr;
+        return temp;
+    }
+
 private:
 
     // Avoid nullptr segfault
@@ -191,54 +255,6 @@ private:
     static ::K _r1(::K x) noexcept
     {
         return x ? r1(x) : x;
-    }
-
-    // Vector appending: Type/nullity protection done in vector.
-    // TODO: Check what these functions do to lhs, rhs and returned reference count.
-    template <Type>
-    friend class Vector;
-
-    template <Type>
-    friend class NestedVector;
-
-    void join_atom(void* value)
-    {
-        m_k = ja(&m_k, value);
-    }
-
-    void join_symbol(char* symbol)
-    {
-        m_k = js(&m_k, ss(symbol));
-    }
-
-    void join_lists(K k)
-    {
-        m_k = jv(&m_k, k.m_k);
-    }
-
-    // Tuple appending: Type/nullity protection done in tuple.
-    // TODO: Check what this function does to lhs, rhs and returned reference count.
-    template <class... Types>
-    friend class Tuple;
-
-    void tuple_append(K k)
-    {
-        // docs mention taking ownership of rhs.
-        m_k = jk(&m_k, _r1(k.m_k));
-    }
-
-    friend class Converter;
-
-    // For Converter and Tuple
-
-    // For Converter.
-    // Use to get the internal pointer and return back to 
-    // manual memory management. May return nullptr.
-    ::K release() noexcept
-    {
-        auto temp = m_k;
-        m_k = nullptr;
-        return temp;
     }
 
     /**

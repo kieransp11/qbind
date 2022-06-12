@@ -161,14 +161,7 @@ public:
     {
         if (!m_ptr.is<Vector<T>>())
             throw std::runtime_error("Nested vector is not flat, cannot append underlier.");
-        if constexpr(T == Type::Symbol)
-        {
-            m_ptr.join_symbol(value);
-        }
-        else
-        {
-            m_ptr.join_atom(&value);
-        }
+        m_ptr.join_atom(value);
     }
 
     // Add atom if root of nested vector is tuple

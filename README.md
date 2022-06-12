@@ -40,8 +40,9 @@ Mixed arrays are `K` objects filled with other `K` objects. In many cases the le
 
 ## TODO:
 
-- Fix function functionality for new method
+### FEAT:
 - Implement map interface.
 - Implement table interface.
 - Implement keyed table interface.
 - Reimplement singletons as atoms and atoms as singletons.
+- Reimplement singletons/atom to their internal element.

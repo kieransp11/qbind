@@ -216,14 +216,7 @@ public:
 
     void push_back(Underlier value)
     {
-        if constexpr(T == Type::Symbol)
-        {
-            m_ptr.join_symbol(value);
-        }
-        else
-        {
-            m_ptr.join_atom(&value);
-        }
+        m_ptr.join_atom(value);
     }
 
     void push_back(Vector<T> vec)
