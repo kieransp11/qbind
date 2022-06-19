@@ -85,6 +85,10 @@ public:
         return *this;
     }
 
+    // Note: This is a dangerous operation. Use sparingly. This may break
+    // invariants of classes. i.e. if a map if constructed of two equal
+    // length vectors, and then you swap out the keys to be shorted, the
+    // length invariant is broken.
     void swap(K& other) noexcept
     {
         auto tmp = m_k;
@@ -122,6 +126,12 @@ public:
         ) : nullptr;
     }
 
+    template<typename T>
+    T* data() const noexcept
+    {
+        return static_cast<T*>(data());
+    }
+
     // type checkers
 
     template<class T>
@@ -135,8 +145,8 @@ public:
         if (std::holds_alternative<std::string>(tc)) return false;
         // inner type of 0 implies could be nested vector of any type, to return true.
         const auto [s, t] = std::get<0>(tc);
-        return (T::Structure == s && T::Type == t) ||
-               (T::Structure == Structure::NestedVector && Type(0) == t);
+        return (T::structure == s && T::type == t) ||
+               (T::structure == Structure::NestedVector && Type(0) == t);
     }
 
     template<class T>
@@ -154,11 +164,11 @@ public:
             throw std::runtime_error(ss.str());
         }
         const auto [s, t] = std::get<0>(tc);
-        if ((T::Structure == s && T::Type == t) ||
-            (T::Structure == Structure::NestedVector && Type(0) == t)) return;
+        if ((T::structure == s && T::type == t) ||
+            (T::structure == Structure::NestedVector && Type(0) == t)) return;
 
         std::ostringstream ss;
-        ss << "Types did not match. Expected " << T::Structure << " " << T::Type << " but found " << s << " " << t;
+        ss << "Types did not match. Expected " << T::structure << " " << T::type << " but found " << s << " " << t;
         throw std::runtime_error(ss.str());
     }
 
@@ -174,6 +184,22 @@ public:
     is_with_info() const
     {
         auto res = T::template tuple_type_match<0,0>(m_k);
+        if (res.has_value())
+            throw std::runtime_error(res.value());
+    }
+
+    template<class T>
+    typename std::enable_if_t<internal::is_instance_class<T, Dictionary>::value, bool>
+    is() const noexcept
+    {
+        return !T::template dictionary_type_match(m_k).has_value();
+    }
+
+    template<class T>
+    typename std::enable_if_t<internal::is_instance_class<T, Dictionary>::value, void>
+    is_with_info() const noexcept
+    {
+        auto res = T::template dictionary_type_match(m_k);
         if (res.has_value())
             throw std::runtime_error(res.value());
     }
@@ -316,8 +342,8 @@ private:
             return std::get<std::string>(res);
         const auto t = std::get<Type>(res);
         const auto tv = static_cast<signed char>(t);
-        if (tv < 1 || tv < 19 || tv == 3)
-            return "Invalid absolute type found. Not in range [1, 19] excluding 3";
+        if (tv < 1 || 19 < tv || tv == 3)
+            return "Invalid absolute type found. Not in range [1, 19] excluding 3. Found: " + std::to_string(tv);
 
         if (k->t < 0)
             return std::make_pair(Structure::Atom, t);
@@ -337,6 +363,10 @@ private:
         {
             return Type::template tuple_type_match_impl<Depth+1, 0>(entry);
         }
+        else if constexpr (internal::is_instance_class<Type, Dictionary>::value)
+        {
+            return Type::template dictionary_type_match(entry);
+        }
         // If atom/vector/nested vector
         else if constexpr (internal::is_instance_type<Type, NestedVector>::value || 
                       internal::is_instance_type<Type, Vector>::value ||
@@ -346,16 +376,16 @@ private:
             if (std::holds_alternative<std::string>(res))
             {
                 std::ostringstream ss;
-                ss << "Failed to get inner type for " << Type::Structure << " " << Type::Type << " at depth "
+                ss << "Failed to get inner type for " << Type::structure << " " << Type::type << " at depth "
                 << Depth << " index " << Idx << ": " << std::get<std::string>(res);
                 return ss.str();
             }
 
             const auto [s, t] = std::get<0>(res);
-            if ((s == Type::Structure && t == Type::Type) || (s == Type::NestedVector && t == Type(0))) return std::nullopt;
+            if ((s == Type::structure && t == Type::type) || (s == Type::NestedVector && t == Type(0))) return std::nullopt;
 
             std::ostringstream ss;
-            ss << "Types did not match at depth " << Depth << " index " << Idx << ". Expected " << Type::Structure << " " << Type::Type << 
+            ss << "Types did not match at depth " << Depth << " index " << Idx << ". Expected " << Type::structure << " " << Type::type << 
                   " but found " << s << " " << t;
             return ss.str();
         }
@@ -386,6 +416,8 @@ private:
     template<size_t Depth, size_t Idx, class... Types>
     static std::optional<std::string> tuple_type_match(::K data)
     {
+        if (!data)
+            return "Root is nullptr";
         if (data->t != 0)
             return "Not tuple at Depth: " + std::to_string(Depth) + " Index: " + std::to_string(Idx);
         // It may be possible to have a tuple which will return false for the container
@@ -395,6 +427,56 @@ private:
             return "Bad length at Depth: " + std::to_string(Depth) + " Index: " + std::to_string(Idx) +
                    ". Expected: " + std::to_string(sizeof...(Types)) + " Found: " + std::to_string(data->n);
         return tuple_type_match_impl<Depth, Idx, Types...>(data);
+    }
+
+    template<class T>
+    static std::optional<std::string> dictionary_type_match_impl(::K data, std::string k_or_v)
+    {
+        if constexpr (internal::is_instance_class_v<T, Tuple>)
+        {
+            auto res = T::template tuple_type_match<0,0>(data);
+            if (!res.has_value())
+                return std::nullopt;
+            std::ostringstream ss;
+            ss << k_or_v << " do not match TKey: " << res.value();
+            return ss.str();
+        }
+        else
+        {
+            auto res = inner_type(data);
+            if (std::holds_alternative<std::string>(res))
+                return "Failed to check type of " + k_or_v + ": " + std::get<std::string>(res);
+            const auto [s, t] = std::get<0>(res);
+            if (s == Structure::Atom)
+                return "Cannot use an atom as " + k_or_v;
+
+            if ((s == T::structure && t == T::type) ||
+                (s == Structure::NestedVector && t == Type(0)))
+                return std::nullopt;
+
+            std::ostringstream ss;
+            ss << k_or_v << " do not match. Expected " << T::structure << " " << T::type
+               << " but found " << s << " " << t;
+        }
+    }
+
+    template<class TKey, class TValue>
+    static std::optional<std::string> dictionary_type_match(::K data)
+    {
+        if (!data)
+            return "Root is nullptr";
+        if (data->t != 99)
+            return "Not a dictionary";
+
+        // Checks keys and values
+        auto kres = dictionary_type_match_impl<TKey>(reinterpret_cast<::K *>(data->G0)[0], "keys");
+        auto vres = dictionary_type_match_impl<TValue>(reinterpret_cast<::K *>(data->G0)[1], "values");
+        // combine results
+        if (kres.has_value() && vres.has_value())
+            return kres.value() + " and " + vres.value();
+        if (!kres.has_value() && !vres.has_value())
+            return std::nullopt;
+        return kres.has_value() ? kres : vres;
     }
 
 private:

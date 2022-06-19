@@ -31,6 +31,7 @@ extern "C"
     std::cout << x << " " << x->r << std::endl;
     return r1(x);
 }
+
 }
 
 // Example usage:

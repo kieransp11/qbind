@@ -107,7 +107,7 @@ public:
         return {m_ptr};
     }
 
-    static constexpr Structure Structure = Structure::Tuple;
+    static constexpr Structure structure = Structure::Tuple;
 
     K get() const
     {

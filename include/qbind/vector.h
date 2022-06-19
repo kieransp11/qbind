@@ -5,58 +5,32 @@
 #include <kx/kx.h>
 
 #include "k.h"
+#include "symbol.h"
 #include "type.h"
 
 namespace qbind
 {
 
-/**
- * @brief Wrapper around symbol that ensures interning on assignment.
- */
-class SymbolReference
-{
-public:
+// TODO: Thing what Type* is for an iterator operator->. Iterators should probably use <Type T> enum rather than actual type.
+//  Make iterator just for vector, then different onces for nested vector?
 
-    operator const char*() const {
-        return m_ptr;
-    }
-
-    SymbolReference& operator=(char* value)
-    {
-        m_ptr = ss(value);
-        return *this;
-    }
-
-    SymbolReference(char*& ptr)
-    :m_ptr(ptr)
-    { }
-
-private:
-    // where the symbol is located.
-    char *&m_ptr;
-};
+// TODO: Implement comparisons on vector.
 
 template <Type T>
 class Vector
 {
 public:
 
-    static constexpr Type Type = T;
-    static constexpr Structure Structure = Structure::Vector;
+    static constexpr Type type = T;
+    static constexpr Structure structure = Structure::Vector;
 
     // To access underlying data
-    using Underlier = typename internal::c_type<T>::Underlier;
-    
-    // What is actually returned (const accessors)
-    using result = std::conditional_t<T == Type::Symbol, const char *, Underlier>;
-
-    using reference = std::conditional_t<T==Type::Symbol,
-        SymbolReference,
-        Underlier &>;
-    using const_reference = result const &;
-
-    using pointer = Underlier*;
-    using const_pointer = result const *;
+    using underlier         = typename internal::c_type<T>::underlier;
+    using value             = typename internal::c_type<T>::value;
+    using reference         = typename internal::c_type<T>::reference;
+    using const_reference   = typename internal::c_type<T>::const_reference;
+    using pointer           = typename internal::c_type<T>::pointer;
+    using const_pointer     = typename internal::c_type<T>::const_pointer;
 
     // Initialise from a K object
     Vector(K data)
@@ -86,29 +60,15 @@ public:
             throw std::runtime_error("Length must be non-negative");
         }
         m_ptr = K{ktn(static_cast<signed char>(T), last-first)};
-        auto it = static_cast<Underlier*>(m_ptr.data());
-        if constexpr (std::is_same_v<char*, Underlier>)
-        {
-            std::transform(first, last, it, ss);
-        }
-        else
-        {
-            std::copy(first, last, it);
-        }
+        auto it = m_ptr.data<underlier>();
+        std::transform(first, last, it, to_underlier);
     }
 
-    Vector(std::initializer_list<Underlier> list)
+    Vector(std::initializer_list<value> list)
     {
         m_ptr = K{ktn(static_cast<signed char>(T), list.size())};
-        auto it = static_cast<Underlier*>(m_ptr.data());
-        if constexpr (std::is_same_v<char*, Underlier>)
-        {
-            std::transform(list.begin(), list.end(), it, ss);
-        }
-        else
-        {
-            std::copy(list.begin(), list.end(), it);
-        }
+        auto it = m_ptr.data<underlier>();
+        std::transform(list.begin(), list.end(), it, to_underlier);
     }
 
     template<qbind::Type Q=T, typename = typename std::enable_if<Q == Type::Char>::type>
@@ -131,59 +91,57 @@ public:
     reference at(size_t pos) 
     {
         check_in_range();
-        return static_cast<Underlier *>(m_ptr.data())[pos];
+        return m_ptr.data<underlier>()[pos];
     }
 
     const_reference at(size_t pos) const 
     {
         check_in_range();
-        return static_cast<Underlier *>(m_ptr.data())[pos];
+        return m_ptr.data<underlier>()[pos];
     }
 
     // []
     reference operator[](size_t pos) 
     {
-        return static_cast<Underlier *>(m_ptr.data())[pos];
+        return m_ptr.data<underlier>()[pos];
     }
 
     const_reference operator[](size_t pos) const 
     {
-        return static_cast<Underlier *>(m_ptr.data())[pos];
+        return m_ptr.data<underlier>()[pos];
     }
 
     // front
     reference front() 
     {
-        return static_cast<Underlier *>(m_ptr.data())[0];
+        return m_ptr.data<underlier>()[0];
     }
 
     const_reference front() const 
     {
-        return static_cast<Underlier *>(m_ptr.data())[0];
+        return m_ptr.data<underlier>()[0];
     }
 
     // back
     reference back() 
     {
-        return static_cast<Underlier *>(m_ptr.data())[m_ptr.size() - 1];
+        return m_ptr.data<underlier>()[m_ptr.size() - 1];
     }
 
     const_reference back() const 
     {
-        return static_cast<Underlier *>(m_ptr.data())[m_ptr.size() - 1];
+        return m_ptr.data<underlier>()[m_ptr.size() - 1];
     }
 
     // data
-    // Not available for data as don't want to expose data that need to be interned.
-    DISABLE_IF_SYMBOL
     pointer data() 
     {
-        return static_cast<Underlier *>(m_ptr.data());
+        return m_ptr.data<underlier>();
     }
 
     const_pointer data() const 
     {
-        return static_cast<Underlier *>(m_ptr.data());
+        return m_ptr.data<underlier>();
     }
 
     // Iterators
@@ -213,12 +171,12 @@ public:
     // erase, pop_back, resize don't make sense given memory management.
     // TODO: clear, insert, emplace, emplace_back, swap
 
-    void push_back(Underlier value)
+    void push_back(value value)
     {
-        m_ptr.join_atom(value);
+        m_ptr.join_atom(to_underlier(value));
     }
 
-    void push_back(Vector<T> vec)
+    void push_back(const Vector<T>& vec)
     {
         m_ptr.join_lists(vec.m_ptr);
     }
@@ -239,6 +197,8 @@ private:
         if (pos >= m_ptr.size())
             throw std::out_of_range("Attempted to access index " + std::to_string(pos) + " but length is " + std::to_string(size()));
     }
+
+    static constexpr typename internal::c_type<T>::to_underlier to_underlier;
 
     K m_ptr;
 };

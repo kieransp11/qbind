@@ -43,19 +43,18 @@ constexpr bool is_instance_type_v = is_instance_type<T, U>::value;
 template <typename T, typename U, typename... Us>
 class index_of
 {
-public:
-    static constexpr size_t value = type_to_idx<T, U, Us...>();
-
 private:
 
     template<typename _T, typename _U, typename... _Us>
-    constexpr size_t type_to_idx(size_t idx = 0)
+    static constexpr size_t type_to_idx(size_t idx = 0)
     {
         if constexpr (std::is_same_v<T,U>)
             return idx;
         static_assert(sizeof...(Us) > 0, "Failed to find index of type");
         return type_to_idx<T, Us...>(idx + 1);        
     }
+public:
+    static constexpr size_t value = type_to_idx<T, U, Us...>();
 };
 
 template <typename T, typename... Ts>

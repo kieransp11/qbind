@@ -21,10 +21,12 @@ class Atom
 {
 public:
 
-    static constexpr Type Type = T;
-    static constexpr Structure Structure = Structure::Atom;
+    static constexpr Type type = T;
+    static constexpr Structure structure = Structure::Atom;
 
-    using Underlier = typename internal::c_type<T>::Underlier;
+    using underlier = typename internal::c_type<T>::underlier;
+    using value     = typename internal::c_type<T>::value;
+    using reference = typename internal::c_type<T>::reference;
 
     // Initialise from a K object
     Atom(K data)
@@ -36,7 +38,7 @@ public:
     }
 
     // Initialise from value
-    Atom(Underlier v)
+    Atom(value v)
     {
         // Make an atom of the right type using the kx API and put
         // that in a temporary qbind atom as it is safe to assign to.
@@ -47,41 +49,45 @@ public:
     }
 
     /**
-     * @brief If this is a symbol atom only return const char * as a warning
-     * this data should not be mutated/extended.
+     * @brief Retrun value as reference. This allows all operators
+     * defined on the reference type to be used.
      * 
-     * This conversion allows the atom to be printed directly.
+     * For symbols the reference type is SymbolReference. This just
+     * allows lexicographical operators. All other underlying types
+     * are integral, so it opens up the normal operations you would
+     * expect.
+     * 
+     * As all reference values are printable, atoms are printable.
+     * 
+     * @return reference 
      */
-    ENABLE_IF_SYMBOL
-    operator char const *() const { 
-        return *static_cast<const char **>(m_ptr.data()); 
+    operator reference() const {
+        return m_ptr.data<underlier>()[0];
     }
 
     /**
-     * @brief For non-symbol atoms return the underlying value freely.
+     * @brief Returns value of atom as usable type.
+     * If this is a symbol atom only return const char * as a warning
+     * this data should not be mutated/extended.
      * 
-     * This conversion allows the atom to be printed directly.
-    */
-    DISABLE_IF_SYMBOL
-    operator Underlier() const { 
-        return *static_cast<Underlier*>(m_ptr.data()); 
+     * For symbols return std::string_view as symbol content should
+     * not be mutated/extended. The view is created by implicitly 
+     * converting from char*. For all other types this is the
+     * underlying type.
+     */
+    ENABLE_IF_SYMBOL
+    operator value() const {
+        return m_ptr.data<underlier>()[0];
     }
 
     /**
      * @brief Assignment assumes ownership, i.e. char* will be interned
      * and all other values copied.
      */
-    Atom<T>& operator=(Underlier value)
+    Atom<T>& operator=(value value)
     {
-        auto ptr = static_cast<Underlier*>(m_ptr.data());
-        if constexpr (std::is_same_v<Underlier, char*>)
-        {
-            *ptr = ss(value);
-        }
-        else
-        {
-            *ptr = value;
-        }
+        auto ptr = m_ptr.data<underlier>();
+        *ptr = to_underlier(value);
         return *this;
     }
 
@@ -91,6 +97,8 @@ public:
     }
 
 private:
+
+    static constexpr typename internal::c_type<T>::to_underlier to_underlier;
 
     K m_ptr;
 };

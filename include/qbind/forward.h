@@ -17,6 +17,9 @@ class NestedVector;
 template <class... Types>
 class Tuple;
 
+template <class TKey, class TValue>
+class Dictionary;
+
 class Converter;
 
 // Abbreviation: Q style and C style

@@ -5,6 +5,8 @@
 
 #include <kx/kx.h>
 
+#include "symbol.h"
+
 namespace qbind 
 {
 
@@ -38,13 +40,14 @@ enum class Type : signed char
 std::ostream& operator<<(std::ostream& os, const Type &t) 
 {
     static const char *type_txt[] = {
-            "Boolean", "GUID", "", "Byte",            // 1 - 4
+            "Boolean", "GUID", "UNKNOWN", "Byte",     // 1 - 4
             "Short", "Int", "Long",                   // 5 - 7
             "Real", "Float",                          // 8 - 9
             "Char", "Symbol",                         // 10 - 11
             "Timestamp", "Month", "Date", "Datetime", // 12 - 15
             "Timespan", "Minute", "Second", "Time"};  // 16 - 19
-    return os << type_txt[static_cast<signed char>(t) - 1];     
+    const auto idx = static_cast<signed char>(t) - 1;
+    return os << ((idx < 0 || 18 < idx) ? "UNKNOWN" : type_txt[idx]);
 }
 
 enum class Structure : char
@@ -71,35 +74,86 @@ std::ostream& operator<<(std::ostream& os, const Structure &s)
         case Structure::Table:          return os << "Table";
         case Structure::Dictionary:     return os << "Dictionary";
         case Structure::KeyedTable:     return os << "Keyed Table";
-    }     
+    }
+    return os << "UNKNOWN";
 }
 
 namespace internal
 {
 
 /**
+ * @brief std::identity in C++20.
+ */
+struct identity
+{
+    template<typename T>
+    [[nodiscard]] 
+    constexpr T&& operator()(T&& t) const noexcept 
+    { 
+        return std::forward<T>(t); 
+    }
+};
+
+/**
  * @brief Map Type to underlying type.
+ * 
+ * value uses: vector constructor from initialiser list.
+ *             vector assign to from initialiser list.
+ *             vector overloads of assign.
+ *             vector overloads of insert.
+ *             vector overloads of push back.
+ *             vector overloads of resize.
+ * 
+ * underlier     : Type of the underlying kx k0 array.
+ * value         : Type to expose publically
+ * reference     : Mutable reference to value in array.
+ * const_referenc: Const reference to value in array.
+ * pointer       : Mutable pointer to data element.
+ * const_pointer : Immutable pointer to data element.
+ * to_underlier  : underlier f(value)
  */
 template<Type T> struct c_type;
 
-template<> struct c_type<Type::Boolean> { using Underlier = bool; };
-template<> struct c_type<Type::GUID>    { using Underlier = std::array<uint8_t, 16>; };
-template<> struct c_type<Type::Byte>    { using Underlier = uint8_t; };
-template<> struct c_type<Type::Short>   { using Underlier = int16_t; };
-template<> struct c_type<Type::Int>     { using Underlier = int32_t; };
-template<> struct c_type<Type::Long>    { using Underlier = int64_t; };
-template<> struct c_type<Type::Real>    { using Underlier = float; };
-template<> struct c_type<Type::Float>   { using Underlier = double; };
-template<> struct c_type<Type::Char>    { using Underlier = char; };
-template<> struct c_type<Type::Symbol>  { using Underlier = char *; };
-template<> struct c_type<Type::Timestamp> { using Underlier = int64_t; };
-template<> struct c_type<Type::Month>   { using Underlier = int32_t; };
-template<> struct c_type<Type::Date>    { using Underlier = int32_t; };
-template<> struct c_type<Type::Datetime> { using Underlier = double;};
-template<> struct c_type<Type::Timespan> { using Underlier = int64_t; };
-template<> struct c_type<Type::Minute>  { using Underlier = int32_t; };
-template<> struct c_type<Type::Second>  { using Underlier = int32_t; };
-template<> struct c_type<Type::Time>    { using Underlier = int32_t; };
+#define C_TYPE_TRAITS(type)                \
+    using underlier = type;                \
+    using value = type;                    \
+    using reference = value &;             \
+    using const_reference = const value &; \
+    using pointer = value *;               \
+    using const_pointer = const value *;   \
+    using to_underlier = identity;
+
+template<> struct c_type<Type::Boolean> { C_TYPE_TRAITS(bool) };
+template<> struct c_type<Type::GUID>    
+{
+    using guid = std::array<uint8_t, 16>;
+    C_TYPE_TRAITS(guid)
+};
+template<> struct c_type<Type::Byte>    { C_TYPE_TRAITS(uint8_t) };
+template<> struct c_type<Type::Short>   { C_TYPE_TRAITS(int16_t) };
+template<> struct c_type<Type::Int>     { C_TYPE_TRAITS(int32_t) };
+template<> struct c_type<Type::Long>    { C_TYPE_TRAITS(int64_t) };
+template<> struct c_type<Type::Real>    { C_TYPE_TRAITS(float); };
+template<> struct c_type<Type::Float>   { C_TYPE_TRAITS(double); };
+template<> struct c_type<Type::Char>    { C_TYPE_TRAITS(char); };
+template<> struct c_type<Type::Symbol>  
+{ 
+    using underlier = char *;
+    using value = std::string_view;
+    using reference = SymbolReference;
+    using const_reference = const SymbolReference;
+    using pointer = SymbolPointer<false>;
+    using const_pointer = SymbolPointer<true>;
+    using to_underlier = intern;
+};
+template<> struct c_type<Type::Timestamp> { C_TYPE_TRAITS(int64_t) };
+template<> struct c_type<Type::Month>   { C_TYPE_TRAITS(int32_t) };
+template<> struct c_type<Type::Date>    { C_TYPE_TRAITS(int32_t) };
+template<> struct c_type<Type::Datetime> { C_TYPE_TRAITS(double) };
+template<> struct c_type<Type::Timespan> { C_TYPE_TRAITS(int64_t) };
+template<> struct c_type<Type::Minute>  { C_TYPE_TRAITS(int32_t) };
+template<> struct c_type<Type::Second>  { C_TYPE_TRAITS(int32_t) };
+template<> struct c_type<Type::Time>    { C_TYPE_TRAITS(int32_t) };
 
 }
 

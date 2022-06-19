@@ -28,8 +28,8 @@ class NestedVector
 {
 public:
     
-    static constexpr Type Type = T;
-    static constexpr Structure Structure = Structure::NestedVector;
+    static constexpr Type type = T;
+    static constexpr Structure structure = Structure::NestedVector;
 
     using Underlier = typename internal::c_type<T>::Underlier;
 

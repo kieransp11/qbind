@@ -11,9 +11,14 @@
 
 #include "qbind/memory_manager.h"
 #include "qbind/atom.h"
+#include "qbind/dictionary.h"
 #include "qbind/vector.h"
 #include "qbind/nested_vector.h"
 #include "qbind/tuple.h"
+
+#include "qbind/iterator.h"
+
+#include "qbind/symbol.h"
 
 void print(std::string x)
 {
@@ -46,6 +51,8 @@ void check_element_access()
     // std::variant<int, long> v1;
     // std::variant<const int, const long> v2;
     // v2 = v1;
+
+
 
     qbind::Vector<qbind::Type::Short> vec{1, 2, 3, 4, 5};
 
@@ -96,8 +103,242 @@ qbind::Tuple<
     //qbind::Tuple<qbind::Atom<qbind::Type::Boolean>, qbind::Vector<qbind::Type::Long>>::check_type_match<0,0>(ki(5));
 }
 
+struct k1{
+    signed char m, a, t;
+    C u;
+    I r;
+    union{
+        G g;
+        H h;
+        I i;
+        J j;
+        E e;
+        F f;
+        S s;
+        struct k0*k;
+        struct {
+            J n;
+            G *G0;
+        };
+    };
+};
+
+void myK()
+{
+    k0 *myK0 = ktn(KJ, 1000);
+
+    k1* myK1 = reinterpret_cast<k1*>(myK0);
+
+    // k1 *myK1 = new k1();
+    // myK1->t = KJ;
+    // myK1->n = 10;
+
+    // unsigned char myarr[40];
+    // myarr[0] = 40;
+
+    // std::cout << (int64_t)myarr << std::endl;
+    // myK1->G0 = reinterpret_cast<unsigned char*>(myarr);
+
+    // K myK0 = reinterpret_cast<::K>(myK1);
+    // 24 bytes.
+
+    std::cout << (int64_t)myK0 << std::endl;
+    std::cout << (int64_t)myK1 << std::endl;   
+
+    for (auto i = 0; i < 6; ++i)
+    {
+        std::cout << reinterpret_cast<int32_t *>(myK1)[i] << " " << reinterpret_cast<int32_t *>(myK0)[i] << std::endl;
+    }
+    std::cout << std::endl;
+
+    std::cout << "================" << std::endl;
+    std::cout << (long)(&(myK0->G0[0])) << std::endl;
+    std::cout << (long)(&(myK1->G0)) << std::endl;
+
+    unsigned char *k0begin = &(myK0->G0[0]);
+    unsigned char **k1begin = &(myK1->G0);
+
+    std::cout << "================" << std::endl;
+    unsigned char *k1beginp = (unsigned char *)(void *)k1begin;
+
+    std::cout << (long)(k0begin) << std::endl;
+    std::cout << (long)(k1beginp) << std::endl;
+
+    std::cout << "begin p2" << std::endl;
+    unsigned char *k1beginp2 = reinterpret_cast<unsigned char *>(&myK1->G0);
+
+    std::cout << (long)(k1beginp2) << std::endl;
+
+    k1beginp2[100] = 99;
+
+    std::cout << (long)(myK0->G0[100]) << std::endl;
+    std::cout << "================" << std::endl;
+
+    auto newbuf = new unsigned char[100];
+    newbuf[100] = 200;
+
+    myK1->G0 = newbuf;
+
+
+
+    auto myK02 = reinterpret_cast<::K>(myK1);
+
+    std::cout << (long)(myK02->G0[100]) << std::endl;
+
+
+    //myK1->G0[0] = 55;
+    //std::cout << (long)(myK0->G0[0]) << std::endl;
+
+    std::cout << (long)myK0->t << std::endl;
+    std::cout << (long)myK1->t << std::endl;
+
+    std::cout << (long)myK0->n << std::endl;
+    std::cout << (long)myK1->n << std::endl;
+    std::cout << sizeof(k1) << " " << sizeof(k0) << std::endl;
+
+    // std::cout << (long)myK0->G0 << std::endl;
+    // std::cout << (long)myK1->G0 << std::endl;
+
+    // std::cout << (int)myK0->G0[0] << std::endl;
+    // std::cout << (int)myK1->G0[0] << std::endl;
+
+    // auto begin = (J *)((myK0)->G0);
+    // std::cout << (int64_t) (& (begin[5])) << std::endl;
+    // std::cout << (int64_t)(&(reinterpret_cast<int64_t *>(myK1->G0)[5])) << std::endl;
+    // begin[5] = 999;
+
+    // std::cout << reinterpret_cast<int64_t *>(myK1->G0)[5] << std::endl;
+}
+
+void myK2()
+{
+    k1 *myK1 = new k1();
+    myK1->t = KJ;
+    myK1->n = 10;
+
+    auto begin = new unsigned char[10];
+
+    myK1->G0 = reinterpret_cast<unsigned char *>(begin[0]);
+
+    std::cout << "begin " << (long)begin << std::endl;
+    //std::cout << (long)(&(myK1->G0[0])) << std::endl;
+
+    // for (auto i = 0; i < 10; ++i)
+    //     myK1->G0[i] = i + 1;
+
+    auto myK0 = reinterpret_cast<::K>(myK1);
+    std::cout << (long)(&(myK0->G0[0])) << std::endl;
+    std::cout << (long)(&(myK1->G0)) << std::endl;
+
+    std::cout << (long)(myK0->G0[0]) << std::endl;
+}
+
+void print(::K k)
+{
+    std::cout << "m " << (long)reinterpret_cast<signed char *>(k)[0] << std::endl;
+    std::cout << "a " << (long)reinterpret_cast<signed char *>(k)[1] << std::endl;
+    std::cout << "t " << (long)reinterpret_cast<signed char *>(k)[2] << std::endl;
+    std::cout << "u " << (long)reinterpret_cast<signed *>(k)[3] << std::endl;
+    std::cout << "r " << (long)reinterpret_cast<int *>(k)[1] << std::endl;
+    std::cout << "atom or n " << (long)reinterpret_cast<int64_t *>(k)[1] << std::endl;
+    std::cout << "G0 " << (long)reinterpret_cast<int64_t *>(k)[2] << std::endl;
+}
+
+void print(k1* k)
+{
+    std::cout << "m " << (long)reinterpret_cast<signed char *>(k)[0] << std::endl;
+    std::cout << "a " << (long)reinterpret_cast<signed char *>(k)[1] << std::endl;
+    std::cout << "t " << (long)reinterpret_cast<signed char *>(k)[2] << std::endl;
+    std::cout << "u " << (long)reinterpret_cast<signed *>(k)[3] << std::endl;
+    std::cout << "r " << (long)reinterpret_cast<int *>(k)[1] << std::endl;
+    std::cout << "atom or n " << (long)reinterpret_cast<int64_t *>(k)[1] << std::endl;
+    std::cout << "G0 " << (long)reinterpret_cast<int64_t *>(k)[2] << std::endl;
+}
+
 int main()
 {
+    const char * const x = nullptr;
+    //++x;
+    // std::string str2("Hello");
+    // char *ptr = const_cast<char *>(str2.data());
+    // char **pptr;
+    // pptr = &ptr;
+
+    // std::cout << *pptr << std::endl;
+    return 0;
+
+    // This will allocate memory for a k0 struct and its array contiguously on the heap.
+    size_t n = 1000;
+    // TODO: Should this be sizeof(k0) - sizeof(k0::G) + (n)*sizeof(T) ??
+    k0 *s = (k0*)malloc(sizeof(k0) + n * sizeof(char));
+
+    s->G0[0] = 99;
+    s->G0[999] = 128;
+
+    std::cout << "m: " <<  (long)(&(s->m)) << std::endl;
+    std::cout << "a: " <<  (long)(&(s->a)) << std::endl;
+    std::cout << "t: " <<  (long)(&(s->t)) << std::endl;
+    std::cout << "u: " <<  (long)(&(s->u)) << std::endl;
+    std::cout << "r: " <<  (long)(&(s->r)) << std::endl;
+    std::cout << "g: " <<  (long)(&(s->g)) << std::endl;
+    std::cout << "h: " <<  (long)(&(s->h)) << std::endl;
+    std::cout << "i: " <<  (long)(&(s->i)) << std::endl;
+    std::cout << "j: " <<  (long)(&(s->j)) << std::endl;
+    std::cout << "e: " <<  (long)(&(s->e)) << std::endl;
+    std::cout << "f: " <<  (long)(&(s->f)) << std::endl;
+    std::cout << "s: " <<  (long)(&(s->s)) << std::endl;
+    std::cout << "k: " <<  (long)(&(s->k)) << std::endl;
+    std::cout << "n: " <<  (long)(&(s->n)) << std::endl;
+    std::cout << "G0: " <<  (long)(&(s->G0)) << std::endl;
+
+    auto p = reinterpret_cast<char *>(s);
+
+    std::cout << (long)p[16] << std::endl;
+    std::cout << (long)p[1015] << std::endl;
+
+    // auto iatom = ki(5);
+    // auto ptr = reinterpret_cast<int64_t *>(iatom);
+    // print(iatom);
+
+    // K myK0 = ktn(KJ, 743);
+    // ((J *)((myK0)->G0))[0] = 696969;
+
+    // r1(myK0);
+    // print(myK0);
+    // auto myK1fake = reinterpret_cast<k1*>(myK0);
+    // print(myK1fake);
+    // std::cout << "===============================" << std::endl;
+    // k1 *myK1 = new k1;
+    // myK1->t = 7;
+    // myK1->r = 1;
+    // myK1->n = 1000;
+    // auto buf = new int64_t[1000];
+    // std::cout << (long)buf << std::endl;
+    // buf[0] = 696969;
+    // myK1->G0 = reinterpret_cast<unsigned char *>(buf);
+
+    // print(myK1);
+    // auto myK0fake = reinterpret_cast<::K>(myK1);
+    // print(myK0fake);
+
+// std::cout << "here" << (long)(myK0fake->G0) << std::endl;
+// std::cout << "here" << (long)(myK0fake->G0[0]) << std::endl;
+
+//     std::cout << ((J *)((myK0)->G0))[0] << std::endl;
+//     buf[0] = 747474;
+//     std::cout << ((J *)((myK0)->G0))[0] << std::endl;
+
+//     std::cout << "===============================" << std::endl;
+    // ((J *)((myK0fake)->G0))[0] = 747474;
+    // ((J *)((myK0fake)->G0))[1] = 654321;
+
+    // print(myK1);
+    // print(myK0fake);
+
+    // std::cout << buf[0] << std::endl;
+    // myK();
+    return 0;
+
     qbind::MemoryManager::initialise();
 
 
@@ -123,15 +364,15 @@ int main()
 
     qbind::Atom<qbind::Type::Symbol> qatom("qsymbol");
 
-    std::cout << "here" <<  (qatom.Type == qbind::Type::Symbol) << (qatom.Structure == qbind::Structure::Atom) << std::endl;
+    std::cout << "here" <<  (qatom.type == qbind::Type::Symbol) << (qatom.structure == qbind::Structure::Atom) << std::endl;
 
     // This throws if not const
-    const char *qatomdata = qatom;
-    std::cout << (long)qatomdata << std::endl;
+    std::string_view qatomdata = qatom;
+    std::cout << (long)qatomdata.data() << std::endl;
     std::cout << qatomdata << std::endl;
 
     qatom = "Goodbye";
-    const char *qatomdata2 = qatom;
+    std::string_view qatomdata2 = qatom;
     std::cout << qatomdata2 << std::endl;
     std::cout << qatom << std::endl;
 

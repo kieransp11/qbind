@@ -206,4 +206,4 @@ void NonConstLvalueRefArgChecker()
             }                                                            \
             return knk(0);                                               \
         }                                                                \
-    }                                                                    
+    }
