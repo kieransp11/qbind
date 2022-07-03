@@ -117,15 +117,6 @@ public:
         return m_k->t < 0 ? 1 : static_cast<size_t>(m_k->n);
     }
 
-    void* data() const noexcept
-    {
-        return m_k ? (
-            m_k->t < 0 ? 
-                static_cast<void*>(&m_k->g) : 
-                static_cast<void*>(m_k->G0)
-        ) : nullptr;
-    }
-
     template<typename T>
     T* data() const noexcept
     {
@@ -268,7 +259,116 @@ public:
         return temp;
     }
 
+    bool operator==(const K& rhs) const
+    {
+        return equal(m_k, rhs.m_k);
+    }
+
+    bool operator!=(const K& rhs) const
+    {
+        return !equal(m_k, rhs.m_k);
+    }
+
 private:
+
+    // TODO: When is the k field used?
+    // TODO: What is used for a guid atom?
+    static bool equal(::K lhs, ::K rhs)
+    {
+        // type mismatch
+        if (lhs->t != rhs->t)
+            return false;
+
+        // error's aren't equal. shouldn't be working with these values
+        if (lhs->t == -128)
+            return false;
+
+        // check length if array before slow code
+        if (lhs->t >= 0 && lhs->n != rhs->n)
+            return false;
+
+        // work out how to compare data
+        const auto t = abs(lhs->t);
+        size_t byte_size = 0;
+        switch (t)
+        {
+            case KB: // Bool
+            case KG: // Byte
+            case KC: // Char
+                byte_size = 1;
+                break;
+            case UU: // GUID
+                byte_size = 16;
+                break;
+            case KH: // Short
+                byte_size = 2;
+                break;
+            case KI: // Int
+            case KE: // Real
+            case KM: // Month
+            case KD: // Date
+            case KU: // Minute
+            case KV: // Second
+            case KT: // Time
+                byte_size = 4;
+                break;
+            case KJ: // Long
+            case KF: // Float
+            case KP: // Timestamp
+            case KZ: // Datetime
+            case KN: // Timespan
+                byte_size = 8;
+                break;
+            case KS: // Symbol
+            case 0:  // Mixed
+                byte_size = sizeof(lhs); // ptr size
+            default:
+                throw std::logic_error("Unaccounted for type in checking K equals");
+        };
+
+        // atom
+        if (lhs->t < 0)
+        {
+            switch (byte_size)
+            {
+                case 1:
+                    return lhs->g == rhs->g;
+                case 2:
+                    return lhs->h == rhs->h;
+                case 4:
+                    return lhs->i == rhs->i;
+                case 8:
+                    return lhs->j == rhs->j;
+                case 16:
+                    // using byte layout equivalence to get 16 bytes of the union
+                    return lhs->n == rhs->n && static_cast<void*>(lhs->G0) == static_cast<void*>(rhs->G0);
+            };
+        }
+        // homogenous arrays - even works for symbols as doing pointer compare for interned data
+        if (lhs->t > 0)
+        {
+            return memcmp(lhs->G0, rhs->G0, byte_size * lhs->n) == 0;
+        }
+        // nested structure
+        for (size_t idx = 0; idx < lhs->n; ++idx)
+        {
+            if (!equal(
+                static_cast<::K*>(static_cast<void*>(lhs->G0))[idx], 
+                static_cast<::K*>(static_cast<void*>(rhs->G0))[idx]
+                ))
+                return false;
+        }
+        return true;
+    }
+
+    void* data() const noexcept
+    {
+        return m_k ? (
+            m_k->t < 0 ? 
+                static_cast<void*>(&m_k->g) : 
+                static_cast<void*>(m_k->G0)
+        ) : nullptr;
+    }
 
     // Avoid nullptr segfault
     static void _r0(::K x) noexcept

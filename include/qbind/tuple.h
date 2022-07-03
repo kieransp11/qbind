@@ -120,7 +120,7 @@ private:
 
     ::K get_idx(size_t pos)
     {
-        return static_cast<::K *>(m_ptr.data())[pos];
+        return m_ptr.data<::K>()[pos];
     }
 
 };

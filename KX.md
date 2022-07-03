@@ -63,8 +63,8 @@ Intern a (null-terminated) string.
 - string: String to intern.
 - count: Number of character to intern.
 ```
-S sn(S string, I count)
-S ss(S string)
+DONE S sn(S string, I count)
+DONE S ss(S string)
 ```
 
 ## Atom creation

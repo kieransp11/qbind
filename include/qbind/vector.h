@@ -4,17 +4,13 @@
 
 #include <kx/kx.h>
 
+#include "iterator.h"
 #include "k.h"
 #include "symbol.h"
 #include "type.h"
 
 namespace qbind
 {
-
-// TODO: Thing what Type* is for an iterator operator->. Iterators should probably use <Type T> enum rather than actual type.
-//  Make iterator just for vector, then different onces for nested vector?
-
-// TODO: Implement comparisons on vector.
 
 template <Type T>
 class Vector
@@ -31,6 +27,11 @@ public:
     using const_reference   = typename internal::c_type<T>::const_reference;
     using pointer           = typename internal::c_type<T>::pointer;
     using const_pointer     = typename internal::c_type<T>::const_pointer;
+
+    using iterator                  = Iterator<T,false,false>;
+    using reverse_iterator          = Iterator<T,false,true>;
+    using const_iterator            = Iterator<T,true,false>;
+    using const_reverse_iterator    = Iterator<T,true,true>;
 
     // Initialise from a K object
     Vector(K data)
@@ -146,9 +147,21 @@ public:
 
     // Iterators
     // begin/cbegin
+    iterator begin() noexcept               { return m_ptr.data<underlier>(); }
+    const_iterator begin() const noexcept   { return m_ptr.data<underlier>(); }
+    const_iterator cbegin() const noexcept  { return m_ptr.data<underlier>(); }
     // end/cend
+    iterator end() noexcept                 { return m_ptr.data<underlier>() + size(); }
+    const_iterator end() const noexcept     { return m_ptr.data<underlier>() + size(); }
+    const_iterator cend() const noexcept    { return m_ptr.data<underlier>() + size(); }
     // rbegin/crbegin
+    reverse_iterator rbegin() noexcept              { return m_ptr.data<underlier>() + size() - 1; }
+    const_reverse_iterator rbegin() const noexcept  { return m_ptr.data<underlier>() + size() - 1; }
+    const_reverse_iterator crbegin() const noexcept { return m_ptr.data<underlier>() + size() - 1; }
     // rend/crend
+    reverse_iterator rend() noexcept                { return m_ptr.data<underlier>() - 1; }
+    const_reverse_iterator rend() const noexcept    { return m_ptr.data<underlier>() - 1; }
+    const_reverse_iterator crend() const noexcept   { return m_ptr.data<underlier>() - 1; }
 
     // Capacity
     // reserve, capacity, and shrink_to_fit don't make sense given memory management.
@@ -181,9 +194,26 @@ public:
         m_ptr.join_lists(vec.m_ptr);
     }
 
-    // Operators
-    // ==
-    // <=> : Lexicographical ordering
+    /**
+     * @brief The relative order of the first-pair of non-equivalent elements in lhs
+     * and rhs if there are such elements, lhs.size() <=> rhs.size() otherwise.
+     */
+    auto operator<=>(const Vector& rhs) const
+    {
+        const auto min_size = std::min(size(), rhs.size());
+        auto idx = 0;
+        const auto lbegin = cbegin();
+        const auto rbegin = rhs.cbegin();
+        while (idx < min_size)
+        {
+            if (lbegin[idx] != rbegin[idx])
+            {
+                return lbegin[idx] < rbegin[idx] ? -1 : 1;
+            }
+            ++idx;
+        }
+        return rhs.size() - size();
+    }
 
     K get() const
     {

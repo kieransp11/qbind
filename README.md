@@ -38,11 +38,6 @@ This gives us traditional memory managed vectors with a familiar interface from 
 
 Mixed arrays are `K` objects filled with other `K` objects. In many cases the length and type of objects in a mixed array is assumed. For this reason we provide a convenience binding to `std::tuple`. This allows tables to be more conveniently defined as we can type check each element of the column value mixed array against the columns proposed value in the tuple. 
 
-## TODO:
-
 ### FEAT:
-- Implement map interface.
 - Implement table interface.
 - Implement keyed table interface.
-- Reimplement singletons as atoms and atoms as singletons.
-- Reimplement singletons/atom to their internal element.
